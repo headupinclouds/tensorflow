@@ -187,8 +187,10 @@ if(WIN32 AND tensorflow_ENABLE_GPU)
       "${tensorflow_source_dir}/tensorflow/core/kernels/matrix_diag_op.cc"
       "${tensorflow_source_dir}/tensorflow/core/kernels/one_hot_op.cc")
   list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_cpu_only_srcs})
-  add_library(tf_core_kernels_cpu_only OBJECT ${tf_core_kernels_cpu_only_srcs})
+  add_library(tf_core_kernels_cpu_only ${TF_LIB_TYPE} ${tf_core_kernels_cpu_only_srcs})
   add_dependencies(tf_core_kernels_cpu_only tf_core_cpu)
+  target_any_link_libraries(tf_core_kernels_cpu_only PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
+  
   # Undefine GOOGLE_CUDA to avoid registering unsupported GPU kernel symbols.
   get_target_property(target_compile_flags tf_core_kernels_cpu_only COMPILE_FLAGS)
   if(target_compile_flags STREQUAL "target_compile_flags-NOTFOUND")
@@ -199,8 +201,10 @@ if(WIN32 AND tensorflow_ENABLE_GPU)
   set_target_properties(tf_core_kernels_cpu_only PROPERTIES COMPILE_FLAGS ${target_compile_flags})
 endif(WIN32 AND tensorflow_ENABLE_GPU)
 
-add_library(tf_core_kernels OBJECT ${tf_core_kernels_srcs})
+add_library(tf_core_kernels ${TF_LIB_TYPE} ${tf_core_kernels_srcs})
 add_dependencies(tf_core_kernels tf_core_cpu)
+# For hunter
+target_any_link_libraries(tf_core_kernels PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 if(WIN32)
   target_compile_options(tf_core_kernels PRIVATE /MP)

@@ -23,9 +23,13 @@ set(tf_cc_framework_srcs
     "${tensorflow_source_dir}/tensorflow/cc/framework/scope.cc"
 )
 
-add_library(tf_cc_framework OBJECT ${tf_cc_framework_srcs})
+add_library(tf_cc_framework ${TF_LIB_TYPE} ${tf_cc_framework_srcs})
 
 add_dependencies(tf_cc_framework tf_core_framework)
+
+target_any_link_libraries(tf_cc_framework PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
+
+# EIGEN_ROOT=/Users/dhirvonen/.hunter/_Base/109b2ab/93591a7/3d0e0eb/Install
 
 ########################################################
 # tf_cc_op_gen_main library
@@ -36,9 +40,11 @@ set(tf_cc_op_gen_main_srcs
     "${tensorflow_source_dir}/tensorflow/cc/framework/cc_op_gen.h"
 )
 
-add_library(tf_cc_op_gen_main OBJECT ${tf_cc_op_gen_main_srcs})
+add_library(tf_cc_op_gen_main ${TF_LIB_TYPE} ${tf_cc_op_gen_main_srcs})
 
 add_dependencies(tf_cc_op_gen_main tf_core_framework)
+
+target_any_link_libraries(tf_cc_op_gen_main PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # tf_gen_op_wrapper_cc executables
@@ -49,7 +55,9 @@ set(cc_ops_target_dir ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/cc/ops)
 
 add_custom_target(create_cc_ops_header_dir
     COMMAND ${CMAKE_COMMAND} -E make_directory ${cc_ops_target_dir}
-)
+    )
+
+set_property(TARGET create_cc_ops_header_dir PROPERTY FOLDER "custom")
 
 set(tf_cc_ops_generated_files)
 
@@ -66,11 +74,12 @@ foreach(tf_cc_op_lib_name ${tf_cc_op_lib_names})
         $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>
         $<TARGET_OBJECTS:tf_core_lib>
         $<TARGET_OBJECTS:tf_core_framework>
-    )
-
+        )
+    set_property(TARGET ${tf_cc_op_lib_name}_gen_cc PROPERTY FOLDER "app/gen")
+      
     target_link_libraries(${tf_cc_op_lib_name}_gen_cc PRIVATE
         tf_protos_cc
-        ${tensorflow_EXTERNAL_LIBRARIES}
+        ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
     )
 
     set(cc_ops_include_internal 0)
@@ -103,7 +112,9 @@ add_library(tf_cc_ops OBJECT
     "${tensorflow_source_dir}/tensorflow/cc/ops/const_op.h"
     "${tensorflow_source_dir}/tensorflow/cc/ops/const_op.cc"
     "${tensorflow_source_dir}/tensorflow/cc/ops/standard_ops.h"
-)
+    )
+
+target_any_link_libraries(tf_cc_ops PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # tf_cc_while_loop library
@@ -114,6 +125,8 @@ add_library(tf_cc_while_loop OBJECT
 )
 
 add_dependencies(tf_cc_while_loop tf_core_framework tf_cc_ops)
+
+target_any_link_libraries(tf_cc_while_loop PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # tf_cc library
@@ -145,11 +158,14 @@ file(GLOB_RECURSE tf_cc_test_srcs
 
 list(REMOVE_ITEM tf_cc_srcs ${tf_cc_test_srcs})
 
-add_library(tf_cc OBJECT ${tf_cc_srcs})
+add_library(tf_cc ${TF_LIB_TYPE} ${tf_cc_srcs})
 add_dependencies(tf_cc tf_cc_framework tf_cc_ops)
+
+target_any_link_libraries(tf_cc PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 set (pywrap_tensorflow_lib "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/pywrap_tensorflow_internal.lib")
 add_custom_target(tf_extension_ops)
+set_property(TARGET tf_extension_ops PROPERTY FOLDER "app/gen")
 
 function(AddUserOps)
   cmake_parse_arguments(_AT "" "" "TARGET;SOURCES;GPUSOURCES;DEPENDS;DISTCOPY" ${ARGN})
@@ -163,7 +179,7 @@ function(AddUserOps)
   endif()
   # create shared library from source and cuda obj
   add_library(${_AT_TARGET} SHARED ${_AT_SOURCES} ${gpu_lib})
-  target_link_libraries(${_AT_TARGET} ${pywrap_tensorflow_lib})
+  target_link_libraries(${_AT_TARGET} ${pywrap_tensorflow_lib} sqlite3)
   if(WIN32)
     if (tensorflow_ENABLE_GPU AND _AT_GPUSOURCES)
         # some ops call out to cuda directly; need to link libs for the cuda dlls

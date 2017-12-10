@@ -22,7 +22,7 @@ limitations under the License.
 #include <cstring>
 #include <fstream>
 #include <vector>
-#include "include/json/json.h"
+#include "json/json.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/gtl/map_util.h"
 #include "tensorflow/core/lib/gtl/stl_util.h"

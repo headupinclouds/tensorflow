@@ -37,19 +37,36 @@ endfunction(GetTestRunPath)
 #
 # create test for each source
 #
+
+# Add SUFFIX to avoid duplicate test names
+#
+# CMake Error at tf_tests.cmake:73 (add_executable):
+#  add_executable cannot create target
+#  "tensorflow_core_profiler_internal_tfprof_show_test" because another target
+#  with the same name already exists.  The existing target is an executable
+#  created in source directory
+#  "/tensorflow/tensorflow/contrib/cmake".
+#  See documentation for policy CMP0002 for more details.
+
 function(AddTests)
-  cmake_parse_arguments(_AT "" "" "SOURCES;OBJECTS;LIBS;DATA;DEPENDS" ${ARGN})
+
+  cmake_parse_arguments(_AT "" "SUFFIX" "SOURCES;OBJECTS;LIBS;DATA;DEPENDS;INCLUDES" ${ARGN})
+  message("SUFFIX = ${_AT_SUFFIX}")
+
+  message("AddTests: _AT_INCLUDES: ${_AT_INCLUDES}")  
+  
   foreach(sourcefile ${_AT_SOURCES})
     string(REPLACE "${tensorflow_source_dir}/" "" exename ${sourcefile})
     string(REPLACE ".cc" "" exename ${exename})
     string(REPLACE "/" "_" exename ${exename})
     AddTest(
-      TARGET ${exename}
+      TARGET ${exename}${_AT_SUFFIX}
       SOURCES ${sourcefile}
       OBJECTS ${_AT_OBJECTS}
       LIBS ${_AT_LIBS}
       DATA ${_AT_DATA}
       DEPENDS ${_AT_DEPENDS}
+      INCLUDES ${_AT_INCLUDES}
     )
   endforeach()
 endfunction(AddTests)
@@ -58,7 +75,7 @@ endfunction(AddTests)
 # create once test
 #
 function(AddTest)
-  cmake_parse_arguments(_AT "" "TARGET" "SOURCES;OBJECTS;LIBS;DATA;DEPENDS" ${ARGN})
+  cmake_parse_arguments(_AT "" "TARGET" "SOURCES;OBJECTS;LIBS;DATA;DEPENDS;INCLUDES" ${ARGN})
 
   list(REMOVE_DUPLICATES _AT_SOURCES)
   list(REMOVE_DUPLICATES _AT_OBJECTS)
@@ -71,7 +88,14 @@ function(AddTest)
   endif(_AT_DEPENDS)
 
   add_executable(${_AT_TARGET} ${_AT_SOURCES} ${_AT_OBJECTS})
-  target_link_libraries(${_AT_TARGET} ${_AT_LIBS})
+  target_link_libraries(${_AT_TARGET} ${_AT_LIBS} sqlite3)
+  set_property(TARGET ${_AT_TARGET} PROPERTY FOLDER "test")  
+
+  message("AddTest: _AT_INCLUDES: ${_AT_INCLUDES}")
+  if (_AT_INCLUDES)
+    list(REMOVE_DUPLICATES _AT_INCLUDES)
+    target_include_directories(${_AT_TARGET} PUBLIC ${_AT_INCLUDES}) # for unsupported      
+  endif()  
 
   GetTestRunPath(testdir ${_AT_TARGET})
   set(tempdir "${testdir}/tmp")
@@ -79,6 +103,8 @@ function(AddTest)
   file(MAKE_DIRECTORY "${testdir}")
   file(MAKE_DIRECTORY "${tempdir}")
   add_test(NAME ${_AT_TARGET} COMMAND ${_AT_TARGET} WORKING_DIRECTORY "${testdir}")
+
+  message("DJH: Adding test ${_AT_TARGET} ")
   set_tests_properties(${_AT_TARGET}
     PROPERTIES ENVIRONMENT "TEST_TMPDIR=${tempdir};TEST_SRCDIR=${testdir}"
   )
@@ -322,6 +348,7 @@ if (tensorflow_BUILD_PYTHON_TESTS)
   )
 endif(tensorflow_BUILD_PYTHON_TESTS)
 
+message("DJH: tensorflow_BUILD_CC_TESTS = ${tensorflow_BUILD_CC_TESTS}")
 if (tensorflow_BUILD_CC_TESTS)
   #
   # cc unit tests. Be aware that by default we include 250+ tests which
@@ -330,6 +357,7 @@ if (tensorflow_BUILD_CC_TESTS)
   # tf_test_src_simple to your needs
   #
 
+  message("DJH: building tensorflow_BUILD_CC_TESTS")
   include_directories(${googletest_INCLUDE_DIRS})
 
   # cc tests wrapper
@@ -369,7 +397,7 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/user_ops/*_test.cc"
     "${tensorflow_source_dir}/tensorflow/contrib/nearest_neighbor/*_test.cc"
     "${tensorflow_source_dir}/tensorflow/contrib/rnn/*_test.cc"
-  )
+    )
 
   # exclude the ones we don't want
   set(tf_test_src_simple_exclude
@@ -381,7 +409,55 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/graph_transferer_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/quantized_matmul_op_for_hexagon_test.cc"
-  )
+    "${tensorflow_source_dir}/tensorflow/core/kernels/spectrogram_op_test.cc" # missing header file
+    )
+
+  if (NOT tensorflow_ENABLE_HDFS_SUPPORT)
+    list(APPEND tf_test_src_simple_exclude "${tensorflow_source_dir}/tensorflow/core/platform/hadoop/hadoop_file_system_test.cc")
+  endif()
+
+  if (NOT tensorflow_BUILD_XSMM)
+    list(APPEND tf_test_src_simple_exclude "${tensorflow_source_dir}/tensorflow/core/kernels/xsmm_conv2d_test.cc")
+  endif()
+
+  #DJH: if (NOT tensorflow_SOMETHING)
+  list(APPEND tf_test_src_simple_exclude
+    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/graph_transferer_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/hexagon_graph_execution_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/hexagon_remote_fused_graph_executor_build_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_execute_op_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_execute_utils_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/ops/remote_fused_graph_ops_test.cc"
+
+    # exclude all grpc stuff
+    "${tensorflow_source_dir}/tensorflow/core/debug/debug_grpc_io_utils_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/debug/grpc_session_debug_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_channel_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_session_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_tensor_coding_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_util_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/rpc_rendezvous_mgr_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpcbench_test.cc"
+    )
+  #endif()
+
+  if (NOT tensorflow_ENABLE_SSL_SUPPORT)
+    # tf_core_framework: see "Cloud libraries require boringssl."
+    list(APPEND tf_test_src_simple_exclude
+      "${tensorflow_source_dir}/tensorflow/core/kernels/cloud/bigquery_table_accessor_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/curl_http_request_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/expiring_lru_cache_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/file_block_cache_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/gcs_file_system_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/google_auth_provider_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/http_request_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/oauth_client_test.cc" #
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/retrying_file_system_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/retrying_utils_test.cc"
+      "${tensorflow_source_dir}/tensorflow/core/platform/cloud/time_util_test.cc"#
+      ) 
+  endif()
 
   if (NOT tensorflow_ENABLE_GPU)
     # exclude gpu tests if we are not buildig for gpu
@@ -438,7 +514,6 @@ if (tensorflow_BUILD_CC_TESTS)
       "${tensorflow_source_dir}/tensorflow/core/platform/cloud/oauth_client_test.cc"
       "${tensorflow_source_dir}/tensorflow/core/platform/cloud/retrying_file_system_test.cc"
       "${tensorflow_source_dir}/tensorflow/core/platform/cloud/time_util_test.cc"
-      "${tensorflow_source_dir}/tensorflow/core/platform/hadoop/hadoop_file_system_test.cc"
       "${tensorflow_source_dir}/tensorflow/core/platform/profile_utils/cpu_utils_test.cc"
       "${tensorflow_source_dir}/tensorflow/core/platform/subprocess_test.cc"
       "${tensorflow_source_dir}/tensorflow/core/common_runtime/gpu/gpu_allocator_retry_test.cc"
@@ -460,7 +535,7 @@ if (tensorflow_BUILD_CC_TESTS)
       "${tensorflow_source_dir}/tensorflow/contrib/tensor_forest/core/ops/training_ops_test.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/tensor_forest/core/ops/tree_utils_test.cc"
     )
-  endif()
+endif()
 
   # Tests for saved_model require data, so need to treat them separately.
   file(GLOB tf_cc_saved_model_test_srcs
@@ -479,6 +554,9 @@ if (tensorflow_BUILD_CC_TESTS)
 
   set(tf_test_lib tf_test_lib)
   add_library(${tf_test_lib} STATIC ${tf_src_testlib})
+  target_link_libraries(${tf_test_lib} PRIVATE ${tensorflow_EXTERNAL_LIBRARIES})
+  set_property(TARGET ${tf_test_lib} PROPERTY FOLDER "lib") 
+  target_include_directories(${tf_test_lib} PRIVATE "${EIGEN_ROOT}/Eigen")
 
   # this is giving to much objects and libraries to the linker but
   # it makes this script much easier. So for now we do it this way.
@@ -489,18 +567,20 @@ if (tensorflow_BUILD_CC_TESTS)
     $<TARGET_OBJECTS:tf_core_kernels>
     $<TARGET_OBJECTS:tf_cc>
     $<TARGET_OBJECTS:tf_cc_framework>
+    $<TARGET_OBJECTS:tf_cc_while_loop>
     $<TARGET_OBJECTS:tf_cc_ops>
     $<TARGET_OBJECTS:tf_core_ops>
     $<TARGET_OBJECTS:tf_core_direct_session>
+    $<TARGET_OBJECTS:tf_core_profiler>
     $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
-  )
+    )
 
   set(tf_test_libs
     tf_protos_cc
     tf_test_lib
     ${tf_core_gpu_kernels_lib}
     ${googletest_STATIC_LIBRARIES}
-    ${tensorflow_EXTERNAL_LIBRARIES}
+    ${tensorflow_EXTERNAL_LIBRARIES} GTest::gtest
   )
 
   # All tests that require no data.
@@ -508,6 +588,8 @@ if (tensorflow_BUILD_CC_TESTS)
     SOURCES ${tf_test_src_simple}
     OBJECTS ${tf_obj_test}
     LIBS ${tf_test_libs}
+    SUFFIX "_simple"
+    INCLUDES "${EIGEN_ROOT}/include/eigen3"
   )
 
   # Tests for tensorflow/cc/saved_model.
@@ -520,6 +602,8 @@ if (tensorflow_BUILD_CC_TESTS)
     DATA ${tf_cc_saved_model_test_data}
     OBJECTS ${tf_obj_test}
     LIBS ${tf_test_libs}
+    SUFFIX "_data"
+    INCLUDES "${EIGEN_ROOT}/include/eigen3"    
   )
 
   file(GLOB_RECURSE tf_core_profiler_test_data
@@ -531,6 +615,8 @@ if (tensorflow_BUILD_CC_TESTS)
     DATA ${tf_core_profiler_test_data}
     OBJECTS ${tf_obj_test}
     LIBS ${tf_test_libs}
+    SUFFIX "_pro"
+    INCLUDES "${EIGEN_ROOT}/include/eigen3"
   )
 
 endif(tensorflow_BUILD_CC_TESTS)

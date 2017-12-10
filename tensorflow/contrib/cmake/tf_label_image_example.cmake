@@ -28,9 +28,9 @@ add_executable(tf_label_image_example
     $<TARGET_OBJECTS:tf_core_direct_session>
     $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
 )
-
 target_link_libraries(tf_label_image_example PUBLIC
     tf_protos_cc
     ${tf_core_gpu_kernels_lib}
-    ${tensorflow_EXTERNAL_LIBRARIES}
+    ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
 )
+set_property(TARGET tf_label_image_example PROPERTY FOLDER "app")

@@ -29,11 +29,14 @@ file(GLOB_RECURSE tf_core_distributed_runtime_exclude_srcs
 
 list(REMOVE_ITEM tf_core_distributed_runtime_srcs ${tf_core_distributed_runtime_exclude_srcs})
 
-add_library(tf_core_distributed_runtime OBJECT ${tf_core_distributed_runtime_srcs})
+add_library(tf_core_distributed_runtime ${TF_LIB_TYPE} ${tf_core_distributed_runtime_srcs})
 
 add_dependencies(tf_core_distributed_runtime
-    tf_core_cpu grpc
-)
+  tf_core_cpu
+  # grpc  # USE HUNTER
+  )
+
+target_any_link_libraries(tf_core_distributed_runtime PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # grpc_tensorflow_server executable
@@ -59,5 +62,7 @@ add_executable(grpc_tensorflow_server
 target_link_libraries(grpc_tensorflow_server PUBLIC
     tf_protos_cc
     ${tf_core_gpu_kernels_lib}
-    ${tensorflow_EXTERNAL_LIBRARIES}
-)
+    ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
+    )
+
+set_property(TARGET grpc_tensorflow_server PROPERTY FOLDER "lib")

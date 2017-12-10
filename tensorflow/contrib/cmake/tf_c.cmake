@@ -29,13 +29,15 @@ set(tf_c_srcs
     "${tensorflow_source_dir}/tensorflow/c/tf_status_helper.h"
 )
 
-add_library(tf_c OBJECT ${tf_c_srcs})
+add_library(tf_c ${TF_LIB_TYPE} ${tf_c_srcs})
 add_dependencies(
   tf_c
   tf_cc_framework
   tf_cc_while_loop
   tf_core_lib
   tf_protos_cc)
+
+target_any_link_libraries(tf_c PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 add_library(tf_c_python_api OBJECT
   "${tensorflow_source_dir}/tensorflow/c/python_api.cc"
@@ -46,3 +48,5 @@ add_dependencies(
   tf_c
   tf_core_lib
   tf_protos_cc)
+
+target_any_link_libraries(tf_c_python_api PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")

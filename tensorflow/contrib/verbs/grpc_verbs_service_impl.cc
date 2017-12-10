@@ -43,7 +43,7 @@ VerbsService::Stub::Stub(
     const std::shared_ptr< ::grpc::ChannelInterface>& channel)
     : channel_(channel),
       rpcmethod_GetRemoteAddress_(grpcVerbsService_method_names[0],
-                                  ::grpc::internal::RpcMethod::NORMAL_RPC,
+                                  ::grpc::RpcMethod::NORMAL_RPC,
                                   channel) {}
 
 ::grpc::Status VerbsService::Stub::GetRemoteAddress(
@@ -55,9 +55,9 @@ VerbsService::Stub::Stub(
 
 VerbsService::AsyncService::AsyncService() {
   for (int i = 0; i < 1; ++i) {
-    AddMethod(new ::grpc::internal::RpcServiceMethod(
+    AddMethod(new ::grpc::RpcServiceMethod(
         grpcVerbsService_method_names[i],
-        ::grpc::internal::RpcMethod::NORMAL_RPC,
+        ::grpc::RpcMethod::NORMAL_RPC,
         nullptr));
     ::grpc::Service::MarkMethodAsync(i);
   }

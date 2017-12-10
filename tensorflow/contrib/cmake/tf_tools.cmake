@@ -25,17 +25,21 @@ set(proto_text "proto_text")
 add_executable(${proto_text}
     ${tf_tools_proto_text_srcs}
     $<TARGET_OBJECTS:tf_core_lib>
-)
+    )
 
 target_link_libraries(${proto_text} PUBLIC
   ${tensorflow_EXTERNAL_LIBRARIES}
-  tf_protos_cc
+  tf_protos_cc sqlite3
 )
 
+set_property(TARGET ${proto_text} PROPERTY FOLDER "app")
+
 add_dependencies(${proto_text} tf_core_lib)
-if(tensorflow_ENABLE_GRPC_SUPPORT)
-    add_dependencies(${proto_text} grpc)
-endif(tensorflow_ENABLE_GRPC_SUPPORT)
+
+# Use Hunter
+# if(tensorflow_ENABLE_GRPC_SUPPORT)
+#     add_dependencies(${proto_text} grpc)
+# endif(tensorflow_ENABLE_GRPC_SUPPORT)
 
 file(GLOB_RECURSE tf_tools_transform_graph_lib_srcs
     "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/*.h"
@@ -54,12 +58,14 @@ file(GLOB_RECURSE tf_tools_transform_graph_lib_exclude_srcs
 )
 list(REMOVE_ITEM tf_tools_transform_graph_lib_srcs ${tf_tools_transform_graph_lib_exclude_srcs})
 
-add_library(tf_tools_transform_graph_lib OBJECT ${tf_tools_transform_graph_lib_srcs})
+add_library(tf_tools_transform_graph_lib ${TF_LIB_TYPE} ${tf_tools_transform_graph_lib_srcs})
 add_dependencies(tf_tools_transform_graph_lib tf_core_cpu)
 add_dependencies(tf_tools_transform_graph_lib tf_core_framework)
 add_dependencies(tf_tools_transform_graph_lib tf_core_kernels)
 add_dependencies(tf_tools_transform_graph_lib tf_core_lib)
 add_dependencies(tf_tools_transform_graph_lib tf_core_ops)
+
+target_any_link_libraries(tf_tools_transform_graph_lib PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 set(transform_graph "transform_graph")
 
@@ -80,8 +86,10 @@ add_executable(${transform_graph}
 target_link_libraries(${transform_graph} PUBLIC
   tf_protos_cc
   ${tf_core_gpu_kernels_lib}
-  ${tensorflow_EXTERNAL_LIBRARIES}
-)
+  ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
+  )
+
+set_property(TARGET ${transform_graph} PROPERTY FOLDER "app")
 
 set(summarize_graph "summarize_graph")
 
@@ -102,8 +110,10 @@ add_executable(${summarize_graph}
 target_link_libraries(${summarize_graph} PUBLIC
   tf_protos_cc
   ${tf_core_gpu_kernels_lib}
-  ${tensorflow_EXTERNAL_LIBRARIES}
-)
+  ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
+  )
+
+set_property(TARGET ${summarize_graph} PROPERTY FOLDER "app")
 
 set(compare_graphs "compare_graphs")
 
@@ -124,8 +134,10 @@ add_executable(${compare_graphs}
 target_link_libraries(${compare_graphs} PUBLIC
   tf_protos_cc
   ${tf_core_gpu_kernels_lib}
-  ${tensorflow_EXTERNAL_LIBRARIES}
-)
+  ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
+  )
+
+set_property(TARGET ${compare_graphs} PROPERTY FOLDER "app")
 
 set(benchmark_model "benchmark_model")
 
@@ -145,5 +157,7 @@ add_executable(${benchmark_model}
 target_link_libraries(${benchmark_model} PUBLIC
   tf_protos_cc
   ${tf_core_gpu_kernels_lib}
-  ${tensorflow_EXTERNAL_LIBRARIES}
+  ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
 )
+
+set_property(TARGET ${benchmark_model} PROPERTY FOLDER "app")

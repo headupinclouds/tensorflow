@@ -54,14 +54,15 @@ foreach(tf_op_lib_name ${tf_op_lib_names})
         "${tensorflow_source_dir}/tensorflow/core/ops/${tf_op_lib_name}.cc"
     )
 
-    add_library(tf_${tf_op_lib_name} OBJECT ${tf_${tf_op_lib_name}_srcs})
-
+    add_library(tf_${tf_op_lib_name} ${TF_LIB_TYPE} ${tf_${tf_op_lib_name}_srcs})
     add_dependencies(tf_${tf_op_lib_name} tf_core_framework)
+    target_any_link_libraries(tf_${tf_op_lib_name} PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 endforeach()
 
 function(GENERATE_CONTRIB_OP_LIBRARY op_lib_name cc_srcs)
-    add_library(tf_contrib_${op_lib_name}_ops OBJECT ${cc_srcs})
+    add_library(tf_contrib_${op_lib_name}_ops ${TF_LIB_TYPE} ${cc_srcs})
     add_dependencies(tf_contrib_${op_lib_name}_ops tf_core_framework)
+    target_any_link_libraries(tf_contrib_${op_lib_name}_ops PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 endfunction()
 
 file(GLOB_RECURSE tensor_forest_hybrid_srcs
@@ -110,9 +111,9 @@ file(GLOB_RECURSE tf_user_ops_srcs
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*.cc"
 )
 
-add_library(tf_user_ops OBJECT ${tf_user_ops_srcs})
-
+add_library(tf_user_ops ${TF_LIB_TYPE} ${tf_user_ops_srcs})
 add_dependencies(tf_user_ops tf_core_framework)
+target_any_link_libraries(tf_user_ops PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # tf_core_ops library
@@ -136,9 +137,9 @@ file(GLOB_RECURSE tf_core_ops_exclude_srcs
 
 list(REMOVE_ITEM tf_core_ops_srcs ${tf_core_ops_exclude_srcs})
 
-add_library(tf_core_ops OBJECT ${tf_core_ops_srcs})
-
+add_library(tf_core_ops ${TF_LIB_TYPE} ${tf_core_ops_srcs})
 add_dependencies(tf_core_ops tf_core_cpu)
+target_any_link_libraries(tf_core_ops PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")
 
 ########################################################
 # tf_debug_ops library
@@ -148,6 +149,6 @@ file(GLOB tf_debug_ops_srcs
     "${tensorflow_source_dir}/tensorflow/core/ops/debug_ops.cc"
 )
 
-add_library(tf_debug_ops OBJECT ${tf_debug_ops_srcs})
-
+add_library(tf_debug_ops ${TF_LIB_TYPE} ${tf_debug_ops_srcs})
 add_dependencies(tf_debug_ops tf_core_framework)
+target_any_link_libraries(tf_debug_ops PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")

@@ -56,8 +56,9 @@ file(GLOB_RECURSE tf_core_cpu_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/grappler/clusters/single_machine.cc"
     "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.h"
     "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.cc"
-)
-list(REMOVE_ITEM tf_core_cpu_srcs ${tf_core_cpu_exclude_srcs})
+    )
+
+  list(REMOVE_ITEM tf_core_cpu_srcs ${tf_core_cpu_exclude_srcs})
 
 if (tensorflow_ENABLE_GPU)
   file(GLOB_RECURSE tf_core_gpu_srcs
@@ -76,5 +77,7 @@ if (tensorflow_ENABLE_GPU)
   list(APPEND tf_core_cpu_srcs ${tf_core_gpu_srcs})
 endif()
 
-add_library(tf_core_cpu OBJECT ${tf_core_cpu_srcs})
+add_library(tf_core_cpu ${TF_LIB_TYPE} ${tf_core_cpu_srcs})
 add_dependencies(tf_core_cpu tf_core_framework)
+
+target_any_link_libraries(tf_core_cpu PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}")

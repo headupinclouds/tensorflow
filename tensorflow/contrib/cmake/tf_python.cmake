@@ -657,7 +657,7 @@ set(tf_python_op_gen_main_srcs
     "${tensorflow_source_dir}/tensorflow/python/framework/python_op_gen_internal.h"
 )
 
-add_library(tf_python_op_gen_main OBJECT ${tf_python_op_gen_main_srcs})
+add_library(tf_python_op_gen_main ${TF_LIB_TYPE} ${tf_python_op_gen_main_srcs})
 
 add_dependencies(tf_python_op_gen_main tf_core_framework)
 
@@ -700,8 +700,8 @@ function(GENERATE_PYTHON_OP_LIB tf_python_op_lib_name)
     )
     target_link_libraries(${tf_python_op_lib_name}_gen_python PRIVATE
         tf_protos_cc
-				tf_python_protos_cc
-        ${tensorflow_EXTERNAL_LIBRARIES}
+		tf_python_protos_cc
+        ${tensorflow_EXTERNAL_LIBRARIES} sqlite3
     )
 
     # Use the generated C++ executable to create a Python file

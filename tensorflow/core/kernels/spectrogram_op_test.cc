@@ -20,7 +20,7 @@ limitations under the License.
 #include <vector>
 
 #include "tensorflow/cc/client/client_session.h"
-#include "tensorflow/cc/ops/audio_ops.h"
+//#include "tensorflow/cc/ops/audio_ops.h"  /* missing file */
 #include "tensorflow/cc/ops/const_op.h"
 #include "tensorflow/cc/ops/math_ops.h"
 #include "tensorflow/core/framework/tensor_testutil.h"

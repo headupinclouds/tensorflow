@@ -87,7 +87,7 @@ struct ThreadPool::Impl : Eigen::ThreadPoolTempl<EigenEnvironment> {
   Impl(Env* env, const ThreadOptions& thread_options, const string& name,
        int num_threads, bool low_latency_hint)
       : Eigen::ThreadPoolTempl<EigenEnvironment>(
-            num_threads, low_latency_hint,
+          num_threads, /*low_latency_hint, */
             EigenEnvironment(env, thread_options, name)) {}
 
   void ParallelFor(int64 total, int64 cost_per_unit,

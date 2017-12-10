@@ -18,7 +18,7 @@ limitations under the License.
 #define EIGEN_USE_THREADS
 
 #define GEMMLOWP_ALLOW_SLOW_SCALAR_FALLBACK
-#include "public/gemmlowp.h"
+#include "gemmlowp/public/gemmlowp.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/kernels/meta_support.h"

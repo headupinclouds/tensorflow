@@ -18,7 +18,7 @@ limitations under the License.
 #include <type_traits>
 
 #define GEMMLOWP_ALLOW_SLOW_SCALAR_FALLBACK
-#include "public/gemmlowp.h"
+#include "gemmlowp/public/gemmlowp.h"
 #include "tensorflow/core/framework/numeric_op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/register_types.h"
