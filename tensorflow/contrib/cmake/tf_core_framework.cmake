@@ -320,16 +320,26 @@ target_any_link_libraries(tf_core_lib PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}"
 # force_rebuild always runs forcing ${VERSION_INFO_CC} target to run
 # ${VERSION_INFO_CC} would cache, but it depends on a phony never produced
 # target.
-# set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
-# add_custom_target(force_rebuild_target ALL DEPENDS ${VERSION_INFO_CC})
-# set_property(TARGET force_rebuild_target PROPERTY FOLDER "custom")
-# add_custom_command(OUTPUT __force_rebuild COMMAND ${CMAKE_COMMAND} -E echo)
-# add_custom_command(OUTPUT
-#     ${VERSION_INFO_CC}
-#     COMMAND ${PYTHON_EXECUTABLE} ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py
-#     --raw_generate ${VERSION_INFO_CC}
-#     DEPENDS __force_rebuild)
-set(tf_version_srcs ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+set(gen_git_source ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py)
+set(version_info_cc_tmp ${CMAKE_CURRENT_BINARY_DIR}/version_info.cc)
+add_custom_target(force_rebuild_target ALL DEPENDS ${VERSION_INFO_CC})
+set_property(TARGET force_rebuild_target PROPERTY FOLDER "custom")
+
+add_custom_command(OUTPUT __force_rebuild COMMAND ${CMAKE_COMMAND} -E echo)
+add_custom_command(OUTPUT
+    ${version_info_cc_tmp}
+    COMMAND ${PYTHON_EXECUTABLE} ${gen_git_source} --raw_generate ${version_info_cc_tmp}
+    DEPENDS __force_rebuild)
+
+
+set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+add_custom_command(OUTPUT
+  "${VERSION_INFO_CC}"
+  DEPENDS "${version_info_cc_tmp}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${version_info_cc_tmp}" "${VERSION_INFO_CC}"
+  ) 
+  
+set(tf_version_srcs ${VERSION_INFO_CC})
 
 ########################################################
 # tf_core_framework library
