@@ -11,12 +11,7 @@ HunterGate(
 # Project
 project(tensorflow VERSION 1.4 LANGUAGES C CXX)
 
-option(tensorflow_USE_OBJECT_LIBS "Use internal object libs" ON)
-if(tensorflow_USE_OBJECT_LIBS)
-  set(TF_LIB_TYPE OBJECT)
-else()
-  set(TF_LIB_TYPE STATIC)
-endif()
+set(TF_LIB_TYPE OBJECT) # future use
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -385,12 +380,6 @@ if(tensorflow_ENABLE_GRPC_SUPPORT)
     ${CMAKE_FIND_ROOT_PATH}/bin
     NO_DEFAULT_PATH
     )
-
-  get_cmake_property(_variableNames VARIABLES)
-  foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-  endforeach()
-  message("$$$$$$")
   
   add_executable(grpc_cpp_plugin IMPORTED)
   set_property(TARGET grpc_cpp_plugin APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
