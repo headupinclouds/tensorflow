@@ -61,16 +61,16 @@ if(NOT WIN32)
       return()
     endif()
 
-    message("SRCS: ${SRCS} ${${SRCS}} #####################")
-    message("HDRS: ${HDRS} ${${HDRS}} #####################")
-    message("ROOT_DIR: ${ROOT_DIR} #####################")
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: SRCS: ${SRCS} ${${SRCS}} #####################")
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: HDRS: ${HDRS} ${${HDRS}} #####################")
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: ROOT_DIR: ${ROOT_DIR} #####################")
 
     set(${SRCS})
     set(${HDRS})
     foreach(FIL ${ARGN})
       set(ABS_FIL ${ROOT_DIR}/${FIL})
 
-      message("ABS_FIL: ${ABS_FIL} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")    
+      message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: ABS_FIL: ${ABS_FIL} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")    
       
       get_filename_component(FIL_WE ${FIL} NAME_WE)
       get_filename_component(FIL_DIR ${ABS_FIL} PATH)
@@ -106,9 +106,13 @@ endif()
 
 function(RELATIVE_PROTOBUF_TEXT_GENERATE_CPP SRCS HDRS ROOT_DIR)
   if(NOT ARGN)
-      message(SEND_ERROR "Error: RELATIVE_PROTOBUF_TEXT_GENERATE_CPP() called without any proto files")
+      message(SEND_ERROR "Error: RELATIVE_PROTOBUF_TEXT_GENERATE_CPP RELATIVE_PROTOBUF_TEXT_GENERATE_CPP() called without any proto files")
     return()
   endif()
+
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : SRCS ${SRCS}")
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : HDRS ${HDRS}")
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : ROOT_DIR ${ROOT_DIR}")
 
   set(${SRCS})
   set(${HDRS})
@@ -121,6 +125,10 @@ function(RELATIVE_PROTOBUF_TEXT_GENERATE_CPP SRCS HDRS ROOT_DIR)
     list(APPEND ${SRCS} "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc")
     list(APPEND ${HDRS} "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h")
 
+    #message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP: ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h")
+
+    message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP: COMMAND ${PROTO_TEXT_EXE} ARGS ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR} ${REL_DIR} ${ABS_FIL} ${ROOT_DIR}/tensorflow/tools/proto_text/placeholder.txt")
+    
     add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc"
              "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h"
@@ -239,7 +247,7 @@ if (NOT tensorflow_ENABLE_GPU)
   file(GLOB tf_core_platform_gpu_srcs
       "${tensorflow_source_dir}/tensorflow/core/platform/cuda_libdevice_path.*"
       "${tensorflow_source_dir}/tensorflow/core/platform/default/cuda_libdevice_path.*")
-  list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_gpu_srcs})
+    list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_gpu_srcs})
 else()
   file(GLOB tf_core_platform_srcs_exclude
       "${tensorflow_source_dir}/tensorflow/core/platform/default/gpu_tracer.cc")
@@ -248,11 +256,17 @@ endif()
 
 file(GLOB tf_core_platform_exclude_srcs
   "${tensorflow_source_dir}/tensorflow/core/platform/variant_coding.cc")
+
 list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_exclude_srcs})
+
+list_sources(tf_core_platform_exclude_srcs)
+list_sources(tf_core_platform_srcs)
 
 list(APPEND tf_core_lib_srcs ${tf_core_platform_srcs})
 
-if(UNIX)
+message("CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} == Darwin")
+if(UNIX OR (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+  message("DJH: DARWIN IS POSIX")
   file(GLOB tf_core_platform_posix_srcs
       "${tensorflow_source_dir}/tensorflow/core/platform/posix/*.h"
       "${tensorflow_source_dir}/tensorflow/core/platform/posix/*.cc"
@@ -306,15 +320,15 @@ target_any_link_libraries(tf_core_lib PRIVATE "${tensorflow_EXTERNAL_LIBRARIES}"
 # force_rebuild always runs forcing ${VERSION_INFO_CC} target to run
 # ${VERSION_INFO_CC} would cache, but it depends on a phony never produced
 # target.
-set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
-add_custom_target(force_rebuild_target ALL DEPENDS ${VERSION_INFO_CC})
-set_property(TARGET force_rebuild_target PROPERTY FOLDER "custom")
-add_custom_command(OUTPUT __force_rebuild COMMAND ${CMAKE_COMMAND} -E echo)
-add_custom_command(OUTPUT
-    ${VERSION_INFO_CC}
-    COMMAND ${PYTHON_EXECUTABLE} ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py
-    --raw_generate ${VERSION_INFO_CC}
-    DEPENDS __force_rebuild)
+# set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+# add_custom_target(force_rebuild_target ALL DEPENDS ${VERSION_INFO_CC})
+# set_property(TARGET force_rebuild_target PROPERTY FOLDER "custom")
+# add_custom_command(OUTPUT __force_rebuild COMMAND ${CMAKE_COMMAND} -E echo)
+# add_custom_command(OUTPUT
+#     ${VERSION_INFO_CC}
+#     COMMAND ${PYTHON_EXECUTABLE} ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py
+#     --raw_generate ${VERSION_INFO_CC}
+#     DEPENDS __force_rebuild)
 set(tf_version_srcs ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
 
 ########################################################
@@ -349,9 +363,13 @@ file(GLOB_RECURSE tf_core_framework_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/util/*test*.h"
     "${tensorflow_source_dir}/tensorflow/core/util/*test*.cc"
     "${tensorflow_source_dir}/tensorflow/core/util/*main.cc"
-)
+    )
+
 
 list(REMOVE_ITEM tf_core_framework_srcs ${tf_core_framework_exclude_srcs})
+
+list_sources(tf_core_framework_exclude_srcs)
+list_sources(tf_core_framework_srcs)      
 
 add_library(tf_core_framework OBJECT
     ${tf_core_framework_srcs}

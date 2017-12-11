@@ -144,8 +144,12 @@ file(GLOB_RECURSE tf_core_kernels_exclude_srcs
    "${tensorflow_source_dir}/tensorflow/core/kernels/fuzzing/*"
    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/*"
    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform*.cc"
-)
-list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_exclude_srcs})
+   )
+ 
+ list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_exclude_srcs})
+
+list_sources(tf_core_kernels_exclude_srcs)
+list_sources(tf_core_kernels_srcs) 
 
 if(WIN32)
   file(GLOB_RECURSE tf_core_kernels_windows_exclude_srcs

@@ -58,7 +58,11 @@ file(GLOB_RECURSE tf_core_cpu_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.cc"
     )
 
-  list(REMOVE_ITEM tf_core_cpu_srcs ${tf_core_cpu_exclude_srcs})
+list(REMOVE_ITEM tf_core_cpu_srcs ${tf_core_cpu_exclude_srcs})
+
+list_sources(tf_core_cpu_exclude_srcs)
+list_sources(tf_core_cpu_srcs)        
+  
 
 if (tensorflow_ENABLE_GPU)
   file(GLOB_RECURSE tf_core_gpu_srcs
@@ -75,6 +79,10 @@ if (tensorflow_ENABLE_GPU)
   )
   list(REMOVE_ITEM tf_core_gpu_srcs ${tf_core_gpu_exclude_srcs})
   list(APPEND tf_core_cpu_srcs ${tf_core_gpu_srcs})
+
+  list_sources(tf_core_gpu_srcs)
+  list_sources(tf_core_gpu_exclude_srcs)
+  
 endif()
 
 add_library(tf_core_cpu ${TF_LIB_TYPE} ${tf_core_cpu_srcs})

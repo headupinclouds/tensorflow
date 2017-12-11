@@ -158,6 +158,9 @@ file(GLOB_RECURSE tf_cc_test_srcs
 
 list(REMOVE_ITEM tf_cc_srcs ${tf_cc_test_srcs})
 
+list_sources(tf_cc_srcs)
+list_sources(tf_cc_test_srcs)
+
 add_library(tf_cc ${TF_LIB_TYPE} ${tf_cc_srcs})
 add_dependencies(tf_cc tf_cc_framework tf_cc_ops)
 

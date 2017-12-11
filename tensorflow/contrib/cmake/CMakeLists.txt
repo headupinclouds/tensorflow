@@ -201,6 +201,7 @@ find_package(Protobuf CONFIG REQUIRED) # TODO
 set(PROTOBUF_PROTOC_EXECUTABLE protobuf::protoc)
 get_target_property(PROTOBUF_INCLUDE_DIRS protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
 
+message("DJH PROTOBUF_PROTOC_EXECUTABLE = ${PROTOBUF_PROTOC_EXECUTABLE}") 
 message("DJH PROTOBUF_INCLUDE_DIRS = ${PROTOBUF_INCLUDE_DIRS}")
 
 #########################
@@ -280,6 +281,13 @@ set(tensorflow_EXTERNAL_LIBRARIES
 #     sqlite_copy_headers_to_destination
 # )
 
+function(list_sources srcs)
+  foreach(src ${${srcs}})
+    message("\t${srcs} ${src}")
+  endforeach()
+endfunction(list_sources)
+  
+
 function(target_any_link_libraries target scope libraries)
   get_target_property(target_type ${target} TYPE)
   message("TARGET = ${target} TYPE = ${target_type}")
@@ -287,7 +295,7 @@ function(target_any_link_libraries target scope libraries)
   string( COMPARE EQUAL "${target_type}" "OBJECT_LIBRARY" is_object_library)
   if(${is_object_library})
     foreach(dep ${libraries})
-      message("dep: ${dep}")
+      #message("dep: ${dep}")
       target_include_directories(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_INCLUDE_DIRECTORIES>)
       target_compile_definitions(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_COMPILE_DEFINITIONS>)
       target_include_directories(${target} ${scope} ${EIGEN_ROOT}/include/eigen3) # for unsupported

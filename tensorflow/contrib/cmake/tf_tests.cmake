@@ -51,7 +51,6 @@ endfunction(GetTestRunPath)
 function(AddTests)
 
   cmake_parse_arguments(_AT "" "SUFFIX" "SOURCES;OBJECTS;LIBS;DATA;DEPENDS;INCLUDES" ${ARGN})
-  message("SUFFIX = ${_AT_SUFFIX}")
 
   message("AddTests: _AT_INCLUDES: ${_AT_INCLUDES}")  
   
@@ -91,7 +90,7 @@ function(AddTest)
   target_link_libraries(${_AT_TARGET} ${_AT_LIBS} sqlite3)
   set_property(TARGET ${_AT_TARGET} PROPERTY FOLDER "test")  
 
-  message("AddTest: _AT_INCLUDES: ${_AT_INCLUDES}")
+  message("\tAddTest: _AT_INCLUDES= ${_AT_INCLUDES} _AT_TARGET=${_AT_TARGET}")
   if (_AT_INCLUDES)
     list(REMOVE_DUPLICATES _AT_INCLUDES)
     target_include_directories(${_AT_TARGET} PUBLIC ${_AT_INCLUDES}) # for unsupported      
@@ -104,7 +103,6 @@ function(AddTest)
   file(MAKE_DIRECTORY "${tempdir}")
   add_test(NAME ${_AT_TARGET} COMMAND ${_AT_TARGET} WORKING_DIRECTORY "${testdir}")
 
-  message("DJH: Adding test ${_AT_TARGET} ")
   set_tests_properties(${_AT_TARGET}
     PROPERTIES ENVIRONMENT "TEST_TMPDIR=${tempdir};TEST_SRCDIR=${testdir}"
   )
@@ -375,6 +373,17 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/c/c_api.cc"
     "${tensorflow_source_dir}/tensorflow/c/checkpoint_reader.cc"
     "${tensorflow_source_dir}/tensorflow/c/tf_status_helper.cc"
+
+    "${tensorflow_source_dir}/tensorflow/core/common_runtime/function_testlib.cc" # tensorflow::test::function::Call(tensorflow::Scope*
+    "${tensorflow_source_dir}/tensorflow/core/kernels/spectrogram_test_utils.cc"  # tensorflow::ReadWaveFileToVector
+    "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.cc" # TrivialTestGraphInputYielder::TrivialTestGraphInputYielder
+    "${tensorflow_source_dir}/tensorflow/core/example/feature_util.cc" # "bool tensorflow::HasFeature<>(std::__1::basic_string<ch
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/partial_run_mgr.cc" # void PartialRunMgr::ExecutorDone
+    "${tensorflow_source_dir}/tensorflow/core/platform/profile_utils/cpu_utils.cc" # tensorflow::profile_utils::CpuUtils::GetMicroSecPerClock(
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/cluster_function_library_runtime_test.cc" # tensorflow::test::TestCluster::MakeTestCluster
+    "${tensorflow_source_dir}/tensorflow/core/example/example_parser_configuration.cc" #  "tensorflow::ExtractExampleParserConfiguration(tensorflow::GraphDef
+
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_testlib.cc" # Status TestCluster::MakeTestCluster  int remote_device_test.cc.
   )
 
   if(WIN32)
@@ -387,7 +396,9 @@ if (tensorflow_BUILD_CC_TESTS)
        ${tf_src_testlib}
        "${tensorflow_source_dir}/tensorflow/core/platform/posix/test.cc"
      )
-  endif()
+ endif()
+
+ list_sources(tf_src_testlib)
 
   # include all test
   file(GLOB_RECURSE tf_test_src_simple
@@ -409,6 +420,7 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/graph_transferer_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/quantized_matmul_op_for_hexagon_test.cc"
+    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/hexagon_rewriter_transform_test.cc" 
     "${tensorflow_source_dir}/tensorflow/core/kernels/spectrogram_op_test.cc" # missing header file
     )
 
@@ -430,6 +442,15 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/ops/remote_fused_graph_ops_test.cc"
 
+    "${tensorflow_source_dir}/tensorflow/core/kernels/spectogram_test.cc" ## tensorflow::ReadWaveFileToVector
+    "${tensorflow_source_dir}/tensorflow/cc/framework/cc_ops_test.cc" # test_op.h missing
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/master_test.cc" # 'tensorflow/core/protobuf/master_service.grpc.pb.h'
+    "${tensorflow_source_dir}/tensorflow/core/common_runtime/function_test.cc" # 'tensorflow/cc/ops/function_ops.h'
+    "${tensorflow_source_dir}/tensorflow/core/kernels/encode_wav_op_test.cc" # use of undeclared identifier 'EncodeWav'
+    "${tensorflow_source_dir}/tensorflow/tensorflow/core/distributed_runtime/remote_device_test.cc" # "tensorflow::GrpcChannelSpec::AddHostPortsJob
+    "${tensorflow_source_dir}/tensorflow/core/kernels/mfcc_op_test.cc" #  error: unknown type name 'Mfcc'
+    "${tensorflow_source_dir}/tensorflow/core/kernels/decode_wav_op_test.cc"  # error: unknown type name 'DecodeWav'
+    
     # exclude all grpc stuff
     "${tensorflow_source_dir}/tensorflow/core/debug/debug_grpc_io_utils_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/debug/grpc_session_debug_test.cc"
@@ -537,10 +558,15 @@ if (tensorflow_BUILD_CC_TESTS)
     )
 endif()
 
+list_sources(tf_test_src_simple)
+list_sources(tf_test_src_simple_exclude)
+
   # Tests for saved_model require data, so need to treat them separately.
   file(GLOB tf_cc_saved_model_test_srcs
     "${tensorflow_source_dir}/tensorflow/cc/saved_model/*_test.cc"
-  )
+    )
+
+  list_sources(tf_cc_saved_model_test_srcs)
 
   list(REMOVE_ITEM tf_test_src_simple
     ${tf_test_src_simple_exclude}
@@ -550,7 +576,9 @@ endif()
   file(GLOB tf_core_profiler_test_srcs
     "${tensorflow_source_dir}/tensorflow/core/profiler/internal/*_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/profiler/internal/advisor/*_test.cc"
-  )
+    )
+
+  list_sources(tf_core_profiler_test_srcs)
 
   set(tf_test_lib tf_test_lib)
   add_library(${tf_test_lib} STATIC ${tf_src_testlib})
@@ -569,9 +597,11 @@ endif()
     $<TARGET_OBJECTS:tf_cc_framework>
     $<TARGET_OBJECTS:tf_cc_while_loop>
     $<TARGET_OBJECTS:tf_cc_ops>
+    $<TARGET_OBJECTS:tf_grappler>
     $<TARGET_OBJECTS:tf_core_ops>
     $<TARGET_OBJECTS:tf_core_direct_session>
     $<TARGET_OBJECTS:tf_core_profiler>
+    $<TARGET_OBJECTS:tf_core_distributed_runtime>
     $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
     )
 
@@ -595,7 +625,9 @@ endif()
   # Tests for tensorflow/cc/saved_model.
   file(GLOB_RECURSE tf_cc_saved_model_test_data
     "${tensorflow_source_dir}/tensorflow/cc/saved_model/testdata/*"
-  )
+    )
+
+  list_sources(tf_cc_saved_model_test_srcs)  
 
   AddTests(
     SOURCES ${tf_cc_saved_model_test_srcs}
@@ -608,7 +640,9 @@ endif()
 
   file(GLOB_RECURSE tf_core_profiler_test_data
     "${tensorflow_source_dir}/tensorflow/core/profiler/testdata/*"
-  )
+    )
+
+  list_sources(tf_core_profiler_test_data)
 
   AddTests(
     SOURCES ${tf_core_profiler_test_srcs}

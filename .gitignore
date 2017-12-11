@@ -17,3 +17,8 @@ cmake_build/
 .idea/**
 /build/
 /tensorflow/core/util/version_info.cc
+
+*/_logs/*
+*/_builds/*
+*/_install/*
+*/_framework/*

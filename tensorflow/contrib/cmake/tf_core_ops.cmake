@@ -133,9 +133,12 @@ file(GLOB_RECURSE tf_core_ops_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*test*.cc"
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*main.cc"
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*.cu.cc"
-)
+    )
 
 list(REMOVE_ITEM tf_core_ops_srcs ${tf_core_ops_exclude_srcs})
+
+list_sources(tf_core_ops_srcs)
+list_sources(tf_core_ops_exclude_srcs)
 
 add_library(tf_core_ops ${TF_LIB_TYPE} ${tf_core_ops_srcs})
 add_dependencies(tf_core_ops tf_core_cpu)

@@ -25,9 +25,12 @@ file(GLOB_RECURSE tf_core_distributed_runtime_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/*test*.h"
     "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/*test*.cc"
     "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_tensorflow_server.cc"
-)
+    )
 
 list(REMOVE_ITEM tf_core_distributed_runtime_srcs ${tf_core_distributed_runtime_exclude_srcs})
+
+list_sources(tf_core_distributed_runtime_exclude_srcs)
+list_sources(tf_core_distributed_runtime_srcs)
 
 add_library(tf_core_distributed_runtime ${TF_LIB_TYPE} ${tf_core_distributed_runtime_srcs})
 

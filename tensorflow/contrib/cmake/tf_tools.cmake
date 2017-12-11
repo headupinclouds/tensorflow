@@ -55,8 +55,12 @@ file(GLOB_RECURSE tf_tools_transform_graph_lib_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/quantize_nodes.cc"
     "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/quantize_weights.cc"
     "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/round_weights.cc"
-)
+    )
+
 list(REMOVE_ITEM tf_tools_transform_graph_lib_srcs ${tf_tools_transform_graph_lib_exclude_srcs})
+
+list_sources(tf_tools_transform_graph_lib_srcs)
+list_sources(tf_tools_transform_graph_lib_exclude_srcs)
 
 add_library(tf_tools_transform_graph_lib ${TF_LIB_TYPE} ${tf_tools_transform_graph_lib_srcs})
 add_dependencies(tf_tools_transform_graph_lib tf_core_cpu)
