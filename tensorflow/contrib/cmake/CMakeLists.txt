@@ -48,6 +48,12 @@ option(tensorflow_ENABLE_SNAPPY_SUPPORT "Enable SNAPPY compression support" ON)
 
 option(tensorflow_ENABLE_XSMM_SUPPORT "Enable XSMM support" OFF)
 
+if(tensorflow_BIULD_SHARED_LIB)
+  set(TF_SDK_TYPE SHARED)
+else()
+  set(TF_SDK_TYPE STATIC)
+endif()
+
 if (NOT WIN32)
   # Threads: defines CMAKE_THREAD_LIBS_INIT and adds -pthread compile option
   # for targets that link ${CMAKE_THREAD_LIBS_INIT}.
@@ -526,9 +532,15 @@ include(tf_tools.cmake)
 if(tensorflow_BUILD_PYTHON_BINDINGS)
   include(tf_python.cmake)
 endif()
-if(tensorflow_BUILD_SHARED_LIB)
-  include(tf_shared_lib.cmake)
-endif()
+
+# This is the only file that exports a tensorflow lib
+# We modify this such that a lib is always created
+# where tensorflow_BUILD_SHARED_LIB toggles the
+# SHARED vs STATIC target type.
+#if(tensorflow_BUILD_SHARED_LIB)
+include(tf_shared_lib.cmake)
+#endif()
+  
 if(tensorflow_BUILD_CC_TESTS OR tensorflow_BUILD_PYTHON_TESTS)
   include(tf_tests.cmake)
 endif()

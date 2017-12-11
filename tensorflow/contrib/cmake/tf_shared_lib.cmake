@@ -61,7 +61,7 @@ endif(WIN32)
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
-add_library(tensorflow SHARED
+add_library(tensorflow ${TF_SDK_TYPE}
     $<TARGET_OBJECTS:tf_c>
     $<TARGET_OBJECTS:tf_cc>
     $<TARGET_OBJECTS:tf_cc_framework>
@@ -122,8 +122,13 @@ configure_package_config_file(
   INSTALL_DESTINATION "${config_install_dir}"
   )
 
+set(tf_target_list ${PROJECT_NAME})
+if(NOT tensorflow_BUILD_SHARED)
+  list(APPEND tf_target_list tf_protos_cc)
+endif()
+
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${tf_target_list}
   EXPORT "${targets_export_name}"
   LIBRARY DESTINATION "lib"
   ARCHIVE DESTINATION "lib"
