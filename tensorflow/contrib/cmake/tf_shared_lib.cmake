@@ -131,19 +131,23 @@ install(
   INCLUDES DESTINATION "${include_install_dir}"
   )
 
-message("TF_TF_SOURCE_DIR ${tf_tf_source_dir}")
-
-install(
-   DIRECTORY "${tf_tf_source_dir}" # No trailing slash
-   DESTINATION "${include_install_dir}"
-   FILES_MATCHING PATTERN "*.h"
-   REGEX "^.*/contrib.*$" EXCLUDE
-   REGEX "^.*/contrib$" EXCLUDE
-   REGEX "^.*/examples.*$" EXCLUDE
-   REGEX "^.*/examples$" EXCLUDE
-   REGEX "^.*/docs.*$" EXCLUDE
-   REGEX "^.*/docs" EXCLUDE   
-   )
+# install necessary headers
+# tensorflow headers
+install(DIRECTORY ${tensorflow_source_dir}/tensorflow/cc/
+        DESTINATION include/tensorflow/cc
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/cc/
+        DESTINATION include/tensorflow/cc
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${tensorflow_source_dir}/tensorflow/core/
+        DESTINATION include/tensorflow/core
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/core/
+        DESTINATION include/tensorflow/core
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${tensorflow_source_dir}/tensorflow/stream_executor/
+        DESTINATION include/tensorflow/stream_executor
+        FILES_MATCHING PATTERN "*.h")
 
 install(
   FILES "${project_config}" "${version_config}"
