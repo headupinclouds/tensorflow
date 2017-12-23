@@ -74,17 +74,11 @@ endif()
 #)
 #list(REMOVE_ITEM tf_stream_executor_srcs ${tf_stream_executor_test_srcs})
 
-if (NOT WIN32)
+if (NOT WIN32 AND NOT is_osx)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lgomp")
-endif (NOT WIN32)
-add_library(tf_stream_executor OBJECT ${tf_stream_executor_srcs})
-
-add_dependencies(tf_stream_executor
-    tf_core_lib
-)
-#target_link_libraries(tf_stream_executor
-#    ${CMAKE_THREAD_LIBS_INIT}
-#    ${PROTOBUF_LIBRARIES}
-#    tf_protos_cc
-#    tf_core_lib
-#)
+endif ()
+resolve_duplicate_filenames(tf_stream_executor_srcs "${tf_src_regex}")
+add_library(tf_stream_executor ${TF_LIB_TYPE} ${tf_stream_executor_srcs})
+tf_install_lib(tf_stream_executor)
+target_link_libraries(tf_stream_executor PUBLIC tf_core_lib)
+target_any_link_libraries(tf_stream_executor PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")

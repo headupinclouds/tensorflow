@@ -153,7 +153,8 @@ RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
 )
 
 add_library(tf_python_protos_cc ${PROTO_SRCS} ${PROTO_HDRS})
-add_dependencies(tf_python_protos_cc tf_protos_cc)
+tf_install_lib(tf_python_protos_cc)
+target_link_libraries(tf_python_protos_cc PUBLIC tf_protos_cc)
 
 # tf_python_touchup_modules adds empty __init__.py files to all
 # directories containing Python code, so that Python will recognize
@@ -234,10 +235,10 @@ set(tf_python_op_gen_main_srcs
     "${tensorflow_source_dir}/tensorflow/python/framework/python_op_gen.h"
     "${tensorflow_source_dir}/tensorflow/python/framework/python_op_gen_internal.h"
 )
-
-add_library(tf_python_op_gen_main OBJECT ${tf_python_op_gen_main_srcs})
-
-add_dependencies(tf_python_op_gen_main tf_core_framework)
+resolve_duplicate_filename(tf_python_op_gen_main_srcs "${tf_src_regex}")
+add_library(tf_python_op_gen_main ${TF_LIB_TYPE} ${tf_python_op_gen_main_srcs})
+tf_install_lib(tf_python_op_gen_main)
+target_link_libraries(tf_python_op_gen_main PUBLIC tf_core_framework)
 
 # create directory for ops generated files
 set(python_ops_target_dir ${CMAKE_CURRENT_BINARY_DIR}/tf_python/tensorflow/python/ops)
@@ -272,17 +273,28 @@ function(GENERATE_PYTHON_OP_LIB tf_python_op_lib_name)
     # Create a C++ executable that links in the appropriate op
     # registrations and generates Python wrapper code based on the
     # registered ops.
+
+    set(tf_libs
+      tf_python_op_gen_main
+      tf_${tf_python_op_lib_name}
+      tf_core_lib
+      tf_core_framework
+      )
+    
     add_executable(${tf_python_op_lib_name}_gen_python
-        $<TARGET_OBJECTS:tf_python_op_gen_main>
-        $<TARGET_OBJECTS:tf_${tf_python_op_lib_name}>
-        $<TARGET_OBJECTS:tf_core_lib>
-        $<TARGET_OBJECTS:tf_core_framework>
+        # $<TARGET_OBJECTS:tf_python_op_gen_main>
+        # $<TARGET_OBJECTS:tf_${tf_python_op_lib_name}>
+        # $<TARGET_OBJECTS:tf_core_lib>
+        # $<TARGET_OBJECTS:tf_core_framework>
         ${GENERATE_PYTHON_OP_LIB_ADDITIONAL_LIBRARIES}
     )
-    target_link_libraries(${tf_python_op_lib_name}_gen_python PRIVATE
+    target_link_libraries(${tf_python_op_lib_name}_gen_python PUBLIC
         tf_protos_cc
-				tf_python_protos_cc
+		tf_python_protos_cc
+        ${tensorflow_EXTERNAL_PACKAGES}
         ${tensorflow_EXTERNAL_LIBRARIES}
+        sqlite3
+        ${tf_libs} # from OBJECT libs
     )
 
     # Use the generated C++ executable to create a Python file
@@ -304,8 +316,8 @@ GENERATE_PYTHON_OP_LIB("math_ops")
 GENERATE_PYTHON_OP_LIB("functional_ops")
 GENERATE_PYTHON_OP_LIB("candidate_sampling_ops")
 GENERATE_PYTHON_OP_LIB("checkpoint_ops")
-GENERATE_PYTHON_OP_LIB("control_flow_ops"
-  ADDITIONAL_LIBRARIES $<TARGET_OBJECTS:tf_no_op>)
+#GENERATE_PYTHON_OP_LIB("control_flow_ops" ADDITIONAL_LIBRARIES $<TARGET_OBJECTS:tf_no_op>)
+GENERATE_PYTHON_OP_LIB("control_flow_ops" ADDITIONAL_LIBRARIES tf_no_op)
 GENERATE_PYTHON_OP_LIB("ctc_ops")
 GENERATE_PYTHON_OP_LIB("data_flow_ops")
 GENERATE_PYTHON_OP_LIB("dataset_ops")
@@ -400,7 +412,7 @@ GENERATE_PYTHON_OP_LIB("summary_ops"
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tf_python/tensorflow/contrib/summary/gen_summary_ops.py)
 
 add_custom_target(tf_python_ops SOURCES ${tf_python_ops_generated_files} ${PYTHON_PROTO_GENFILES})
-add_dependencies(tf_python_ops tf_python_op_gen_main)
+target_link_libraries(tf_python_ops PUBLIC tf_python_op_gen_main)
 
 
 ############################################################
@@ -481,27 +493,54 @@ if(WIN32)
     # that can be exported, we filter the symbols with a python script to the namespaces
     # we need.
     #
+
+    set(tf_libs
+      tf_c
+      tf_c_python_api
+      tf_core_lib
+      tf_core_cpu
+      tf_core_framework
+      tf_core_profiler
+      tf_cc
+      tf_cc_ops
+      tf_cc_while_loop
+      tf_core_ops
+      tf_core_direct_session
+      tf_grappler
+      tf_tools_transform_graph_lib
+      tf_core_kernels
+      )
+
+    if(tensorflow_ENABLE_GRPC_SUPPORT)
+      list(APPEND tf_libs tf_core_distributed_runtime)
+    endif()
+    if(tensorflow_ENABLE_GPU)
+      list(APPEND tf_libs tf_core_kernels_cpu_only tf_stream_executor)
+    endif()
+    
     add_library(pywrap_tensorflow_internal_static STATIC
         ${pywrap_tensorflow_internal_src}
-        $<TARGET_OBJECTS:tf_c>
-        $<TARGET_OBJECTS:tf_c_python_api>
-        $<TARGET_OBJECTS:tf_core_lib>
-        $<TARGET_OBJECTS:tf_core_cpu>
-        $<TARGET_OBJECTS:tf_core_framework>
-        $<TARGET_OBJECTS:tf_core_profiler>
-        $<TARGET_OBJECTS:tf_cc>
-        $<TARGET_OBJECTS:tf_cc_ops>
-        $<TARGET_OBJECTS:tf_cc_while_loop>
-        $<TARGET_OBJECTS:tf_core_ops>
-        $<TARGET_OBJECTS:tf_core_direct_session>
-        $<TARGET_OBJECTS:tf_grappler>
-        $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
-        $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
-        $<TARGET_OBJECTS:tf_core_kernels>
-        $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
-        $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+        # $<TARGET_OBJECTS:tf_c>
+        # $<TARGET_OBJECTS:tf_c_python_api>
+        # $<TARGET_OBJECTS:tf_core_lib>
+        # $<TARGET_OBJECTS:tf_core_cpu>
+        # $<TARGET_OBJECTS:tf_core_framework>
+        # $<TARGET_OBJECTS:tf_core_profiler>
+        # $<TARGET_OBJECTS:tf_cc>
+        # $<TARGET_OBJECTS:tf_cc_ops>
+        # $<TARGET_OBJECTS:tf_cc_while_loop>
+        # $<TARGET_OBJECTS:tf_core_ops>
+        # $<TARGET_OBJECTS:tf_core_direct_session>
+        # $<TARGET_OBJECTS:tf_grappler>
+        # $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+        # $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+        # $<TARGET_OBJECTS:tf_core_kernels>
+        # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
+        # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
     )
 
+    tf_install_lib(pywrap_tensorflow_internal_static)
+  
     target_include_directories(pywrap_tensorflow_internal_static PUBLIC
         ${PYTHON_INCLUDE_DIR}
         ${NUMPY_INCLUDE_DIR}
@@ -510,12 +549,16 @@ if(WIN32)
     #	tf_protos_cc
     #	tf_python_protos_cc
     #)
-    add_dependencies(pywrap_tensorflow_internal_static tf_protos_cc tf_python_protos_cc)
-    set(pywrap_tensorflow_internal_static_dependencies
+    target_link_libraries(pywrap_tensorflow_internal_static PUBLIC
+      tf_protos_cc
+      tf_python_protos_cc
+      ${tf_libs} # from OBJECT libs
+      )
+    set(pywrap_tensorflow_internal_static_dependencies # review
         $<TARGET_FILE:pywrap_tensorflow_internal_static>
         $<TARGET_FILE:tf_protos_cc>
         $<TARGET_FILE:tf_python_protos_cc>
-	${nsync_STATIC_LIBRARIES}
+	    ${nsync_STATIC_LIBRARIES}
     )
 
     set(pywrap_tensorflow_deffile "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/pywrap_tensorflow.def")
@@ -529,33 +572,62 @@ if(WIN32)
     )
 endif(WIN32)
 
+set(tf_libs
+  tf_c
+  tf_c_python_api
+  tf_core_lib
+  tf_core_cpu
+  tf_core_framework
+  tf_core_profiler
+  tf_cc
+  tf_cc_ops
+  tf_cc_while_loop
+  tf_core_ops
+  tf_core_direct_session
+  tf_grappler
+  tf_tools_transform_graph_lib
+  tf_core_kernels
+  )
+
+if(tensorflow_ENABLE_GRPC_SUPPORT)
+  list(APPEND tf_libs tf_core_distributed_runtime)
+endif()
+if(tensorflow_ENABLE_GPU)
+  list(APPEND tf_libs tf_stream_executor)
+  if(${BOOL_WIN32})
+    list(APPEND tf_libs tf_core_kernels_cpu_only)
+  endif()
+endif()
+
 # pywrap_tensorflow_internal is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels. These are installed into
 # tf_python/tensorflow/python/.
 add_library(pywrap_tensorflow_internal SHARED
     ${pywrap_tensorflow_internal_src}
-    $<TARGET_OBJECTS:tf_c>
-    $<TARGET_OBJECTS:tf_c_python_api>
-    $<TARGET_OBJECTS:tf_core_lib>
-    $<TARGET_OBJECTS:tf_core_cpu>
-    $<TARGET_OBJECTS:tf_core_framework>
-    $<TARGET_OBJECTS:tf_core_profiler>
-    $<TARGET_OBJECTS:tf_cc>
-    $<TARGET_OBJECTS:tf_cc_ops>
-    $<TARGET_OBJECTS:tf_cc_while_loop>
-    $<TARGET_OBJECTS:tf_core_ops>
-    $<TARGET_OBJECTS:tf_core_direct_session>
-    $<TARGET_OBJECTS:tf_grappler>
-    $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
-    $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
-    $<TARGET_OBJECTS:tf_core_kernels>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<$<BOOL:${BOOL_WIN32}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+    # $<TARGET_OBJECTS:tf_c>
+    # $<TARGET_OBJECTS:tf_c_python_api>
+    # $<TARGET_OBJECTS:tf_core_lib>
+    # $<TARGET_OBJECTS:tf_core_cpu>
+    # $<TARGET_OBJECTS:tf_core_framework>
+    # $<TARGET_OBJECTS:tf_core_profiler>
+    # $<TARGET_OBJECTS:tf_cc>
+    # $<TARGET_OBJECTS:tf_cc_ops>
+    # $<TARGET_OBJECTS:tf_cc_while_loop>
+    # $<TARGET_OBJECTS:tf_core_ops>
+    # $<TARGET_OBJECTS:tf_core_direct_session>
+    # $<TARGET_OBJECTS:tf_grappler>
+    # $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+    # $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+    # $<TARGET_OBJECTS:tf_core_kernels>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<$<BOOL:${BOOL_WIN32}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
     ${pywrap_tensorflow_deffile}
-)
+    )
+
+tf_install_lib(pywrap_tensorflow_internal)
 
 if(WIN32)
-    add_dependencies(pywrap_tensorflow_internal pywrap_tensorflow_internal_static)
+    target_link_libraries(pywrap_tensorflow_internal PUBLIC pywrap_tensorflow_internal_static)
 endif(WIN32)
 
 target_include_directories(pywrap_tensorflow_internal PUBLIC
@@ -563,9 +635,9 @@ target_include_directories(pywrap_tensorflow_internal PUBLIC
     ${NUMPY_INCLUDE_DIR}
 )
 
-target_link_libraries(pywrap_tensorflow_internal PRIVATE
+target_link_libraries(pywrap_tensorflow_internal PUBLIC
     ${tf_core_gpu_kernels_lib}
-    ${tensorflow_EXTERNAL_LIBRARIES}
+    ${tensorflow_EXTERNAL_PACKAGES} ${tensorflow_EXTERNAL_LIBRARIES}
     tf_protos_cc
     tf_python_protos_cc
     ${PYTHON_LIBRARIES}
@@ -661,7 +733,7 @@ AddUserOps(TARGET _beam_search_ops
 # Build a PIP package containing the TensorFlow runtime.
 ############################################################
 add_custom_target(tf_python_build_pip_package)
-add_dependencies(tf_python_build_pip_package
+target_link_libraries(tf_python_build_pip_package PUBLIC
     pywrap_tensorflow_internal
     tf_python_copy_scripts_to_destination
     tf_python_touchup_modules

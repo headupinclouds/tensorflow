@@ -146,8 +146,12 @@ file(GLOB_RECURSE tf_core_kernels_exclude_srcs
    "${tensorflow_source_dir}/tensorflow/core/kernels/fuzzing/*"
    "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/*"
    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_rewriter_transform*.cc"
-)
-list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_exclude_srcs})
+   )
+ 
+ list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_exclude_srcs})
+
+list_sources(tf_core_kernels_exclude_srcs)
+list_sources(tf_core_kernels_srcs) 
 
 if(WIN32)
   file(GLOB_RECURSE tf_core_kernels_windows_exclude_srcs
@@ -187,8 +191,12 @@ if(WIN32 AND tensorflow_ENABLE_GPU)
       "${tensorflow_source_dir}/tensorflow/core/kernels/matrix_diag_op.cc"
       "${tensorflow_source_dir}/tensorflow/core/kernels/one_hot_op.cc")
   list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_cpu_only_srcs})
-  add_library(tf_core_kernels_cpu_only OBJECT ${tf_core_kernels_cpu_only_srcs})
-  add_dependencies(tf_core_kernels_cpu_only tf_core_cpu)
+  resolve_duplicate_filenames(tf_core_kernels_cpu_only_srcs "${tf_src_regex}")
+  add_library(tf_core_kernels_cpu_only ${TF_LIB_TYPE} ${tf_core_kernels_cpu_only_srcs})
+  tf_install_lib(tf_core_kernels_cpu_only)
+  target_link_libraries(tf_core_kernels_cpu_only PUBLIC tf_core_cpu)
+  target_any_link_libraries(tf_core_kernels_cpu_only PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
+  
   # Undefine GOOGLE_CUDA to avoid registering unsupported GPU kernel symbols.
   get_target_property(target_compile_flags tf_core_kernels_cpu_only COMPILE_FLAGS)
   if(target_compile_flags STREQUAL "target_compile_flags-NOTFOUND")
@@ -199,19 +207,25 @@ if(WIN32 AND tensorflow_ENABLE_GPU)
   set_target_properties(tf_core_kernels_cpu_only PROPERTIES COMPILE_FLAGS ${target_compile_flags})
 endif(WIN32 AND tensorflow_ENABLE_GPU)
 
-add_library(tf_core_kernels OBJECT ${tf_core_kernels_srcs})
-add_dependencies(tf_core_kernels tf_core_cpu)
+resolve_duplicate_filenames(tf_core_kernels_srcs "${tf_src_regex}")
+add_library(tf_core_kernels ${TF_LIB_TYPE} ${tf_core_kernels_srcs})
+tf_install_lib(tf_core_kernels)
+target_link_libraries(tf_core_kernels PUBLIC tf_core_cpu)
+# For hunter
+target_any_link_libraries(tf_core_kernels PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 if (WIN32)
-  target_compile_options(tf_core_kernels PRIVATE /MP)
+  target_compile_options(tf_core_kernels PUBLIC /MP)
 endif (WIN32)
 if (tensorflow_ENABLE_GPU)
   set_source_files_properties(${tf_core_gpu_kernels_srcs} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
   set(tf_core_gpu_kernels_lib tf_core_gpu_kernels)
   cuda_add_library(${tf_core_gpu_kernels_lib} ${tf_core_gpu_kernels_srcs})
+  tf_install_lib(${tf_core_gpu_kernels_lib})
   set_target_properties(${tf_core_gpu_kernels_lib}
                         PROPERTIES DEBUG_POSTFIX ""
                         COMPILE_FLAGS "${TF_REGULAR_CXX_FLAGS}"
   )
-  add_dependencies(${tf_core_gpu_kernels_lib} tf_core_cpu)
+target_link_libraries(${tf_core_gpu_kernels_lib} tf_core_cpu) # FindCUDA uses "plain" target_link_libraries
+
 endif()

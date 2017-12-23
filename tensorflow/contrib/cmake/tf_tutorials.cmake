@@ -16,26 +16,45 @@ set(tf_tutorials_example_trainer_srcs
     "${tensorflow_source_dir}/tensorflow/cc/tutorials/example_trainer.cc"
 )
 
+set(tf_libs
+  tf_core_lib
+  tf_core_cpu
+  tf_core_framework
+  tf_core_kernels
+  tf_cc_framework
+  tf_cc_ops
+  tf_core_ops
+  tf_core_direct_session
+  )
+if(tensorflow_ENABLE_GPU)
+  list(APPEND tf_libs tf_stream_executor)
+endif()
+
 add_executable(tf_tutorials_example_trainer
     ${tf_tutorials_example_trainer_srcs}
-    $<TARGET_OBJECTS:tf_core_lib>
-    $<TARGET_OBJECTS:tf_core_cpu>
-    $<TARGET_OBJECTS:tf_core_framework>
-    $<TARGET_OBJECTS:tf_core_kernels>
-    $<TARGET_OBJECTS:tf_cc_framework>
-    $<TARGET_OBJECTS:tf_cc_ops>
-    $<TARGET_OBJECTS:tf_core_ops>
-    $<TARGET_OBJECTS:tf_core_direct_session>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+    # $<TARGET_OBJECTS:tf_core_lib>
+    # $<TARGET_OBJECTS:tf_core_cpu>
+    # $<TARGET_OBJECTS:tf_core_framework>
+    # $<TARGET_OBJECTS:tf_core_kernels>
+    # $<TARGET_OBJECTS:tf_cc_framework>
+    # $<TARGET_OBJECTS:tf_cc_ops>
+    # $<TARGET_OBJECTS:tf_core_ops>
+    # $<TARGET_OBJECTS:tf_core_direct_session>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
 )
 
 target_link_libraries(tf_tutorials_example_trainer PUBLIC
     tf_protos_cc
     ${tf_core_gpu_kernels_lib}
+    ${tensorflow_EXTERNAL_PACKAGES}
     ${tensorflow_EXTERNAL_LIBRARIES}
+    sqlite3
+    ${tf_libs} # from OBJECT libs
 )
 
 install(TARGETS tf_tutorials_example_trainer
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+set_property(TARGET tf_tutorials_example_trainer PROPERTY FOLDER "app")

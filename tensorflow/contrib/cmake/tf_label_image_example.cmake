@@ -14,28 +14,47 @@
 # ==============================================================================
 set(tf_label_image_example_srcs
     "${tensorflow_source_dir}/tensorflow/examples/label_image/main.cc"
-)
+    )
+
+set(tf_libs
+  tf_core_lib
+  tf_core_cpu
+  tf_core_framework
+  tf_core_kernels
+  tf_cc_framework
+  tf_cc_ops
+  tf_core_ops
+  tf_core_direct_session
+  )
+
+if(tensorflow_ENABLE_GPU)
+  list(APPEND tf_libs tf_stream_executor)
+endif()
 
 add_executable(tf_label_image_example
     ${tf_label_image_example_srcs}
-    $<TARGET_OBJECTS:tf_core_lib>
-    $<TARGET_OBJECTS:tf_core_cpu>
-    $<TARGET_OBJECTS:tf_core_framework>
-    $<TARGET_OBJECTS:tf_core_kernels>
-    $<TARGET_OBJECTS:tf_cc_framework>
-    $<TARGET_OBJECTS:tf_cc_ops>
-    $<TARGET_OBJECTS:tf_core_ops>
-    $<TARGET_OBJECTS:tf_core_direct_session>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
-)
-
+    # $<TARGET_OBJECTS:tf_core_lib>
+    # $<TARGET_OBJECTS:tf_core_cpu>
+    # $<TARGET_OBJECTS:tf_core_framework>
+    # $<TARGET_OBJECTS:tf_core_kernels>
+    # $<TARGET_OBJECTS:tf_cc_framework>
+    # $<TARGET_OBJECTS:tf_cc_ops>
+    # $<TARGET_OBJECTS:tf_core_ops>
+    # $<TARGET_OBJECTS:tf_core_direct_session>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+    )
+  
 target_link_libraries(tf_label_image_example PUBLIC
     tf_protos_cc
     ${tf_core_gpu_kernels_lib}
+    ${tensorflow_EXTERNAL_PACKAGES}
     ${tensorflow_EXTERNAL_LIBRARIES}
+    sqlite3
+    ${tf_libs} # from OBJECT libs
 )
-
 install(TARGETS tf_label_image_example
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+set_property(TARGET tf_label_image_example PROPERTY FOLDER "app")

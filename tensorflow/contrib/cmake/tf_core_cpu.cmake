@@ -56,8 +56,13 @@ file(GLOB_RECURSE tf_core_cpu_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/grappler/clusters/single_machine.cc"
     "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.h"
     "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.cc"
-)
+    )
+
 list(REMOVE_ITEM tf_core_cpu_srcs ${tf_core_cpu_exclude_srcs})
+
+list_sources(tf_core_cpu_exclude_srcs)
+list_sources(tf_core_cpu_srcs)        
+  
 
 if (tensorflow_ENABLE_GPU)
   file(GLOB_RECURSE tf_core_gpu_srcs
@@ -74,7 +79,18 @@ if (tensorflow_ENABLE_GPU)
   )
   list(REMOVE_ITEM tf_core_gpu_srcs ${tf_core_gpu_exclude_srcs})
   list(APPEND tf_core_cpu_srcs ${tf_core_gpu_srcs})
+
+  list_sources(tf_core_gpu_srcs)
+  list_sources(tf_core_gpu_exclude_srcs)
+  
 endif()
 
-add_library(tf_core_cpu OBJECT ${tf_core_cpu_srcs})
-add_dependencies(tf_core_cpu tf_core_framework)
+resolve_duplicate_filenames(tf_core_cpu_srcs "${tf_src_regex}")
+add_library(tf_core_cpu ${TF_LIB_TYPE} ${tf_core_cpu_srcs})
+tf_install_lib(tf_core_cpu)
+target_link_libraries(tf_core_cpu PUBLIC tf_core_framework)
+target_any_link_libraries(tf_core_cpu PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
+
+if(tensorflow_ENABLE_GRPC_SUPPORT)
+  target_compile_definitions(tf_core_cpu PUBLIC TF_ENABLE_GRPC_SUPPORT=1)
+endif()

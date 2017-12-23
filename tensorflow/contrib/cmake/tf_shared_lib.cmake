@@ -12,6 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+
+set(tf_libs
+  tf_c
+  tf_cc
+  tf_cc_framework
+  tf_cc_ops
+  tf_cc_while_loop
+  tf_core_lib
+  tf_core_cpu
+  tf_core_framework
+  tf_core_ops
+  tf_core_direct_session
+  tf_tools_transform_graph_lib
+  tf_core_kernels
+  )
+
+if(tensorflow_ENABLE_GRPC_SUPPORT)
+  list(APPEND tf_libs tf_core_distributed_runtime)
+endif()
+
+if(tensorflow_ENABLE_GPU)
+  list(APPEND tf_libs tf_core_kernels_cpu_only)
+  if(${BOOL_WIN32})
+    list(APPEND tf_stream_executor)
+  endif()
+endif()
+
+
 if(WIN32)
   # Windows: build a static library with the same objects as tensorflow.dll.
   # This can be used to build for a standalone exe and also helps us to
@@ -23,24 +52,27 @@ if(WIN32)
   # we need.
   #
   add_library(tensorflow_static STATIC
-      $<TARGET_OBJECTS:tf_c>
-      $<TARGET_OBJECTS:tf_cc>
-      $<TARGET_OBJECTS:tf_cc_framework>
-      $<TARGET_OBJECTS:tf_cc_ops>
-      $<TARGET_OBJECTS:tf_cc_while_loop>
-      $<TARGET_OBJECTS:tf_core_lib>
-      $<TARGET_OBJECTS:tf_core_cpu>
-      $<TARGET_OBJECTS:tf_core_framework>
-      $<TARGET_OBJECTS:tf_core_ops>
-      $<TARGET_OBJECTS:tf_core_direct_session>
-      $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
-      $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
-      $<TARGET_OBJECTS:tf_core_kernels>
-      $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
-      $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+      # $<TARGET_OBJECTS:tf_c>
+      # $<TARGET_OBJECTS:tf_cc>
+      # $<TARGET_OBJECTS:tf_cc_framework>
+      # $<TARGET_OBJECTS:tf_cc_ops>
+      # $<TARGET_OBJECTS:tf_cc_while_loop>
+      # $<TARGET_OBJECTS:tf_core_lib>
+      # $<TARGET_OBJECTS:tf_core_cpu>
+      # $<TARGET_OBJECTS:tf_core_framework>
+      # $<TARGET_OBJECTS:tf_core_ops>
+      # $<TARGET_OBJECTS:tf_core_direct_session>
+      # $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+      # $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+      # $<TARGET_OBJECTS:tf_core_kernels>
+      # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>
+      # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
   )
 
-  add_dependencies(tensorflow_static tf_protos_cc)
+  target_link_libraries(tensorflow_static PUBLIC
+    tf_protos_cc
+    ${tf_libs} # from OBJECT libs
+    )
   set(tensorflow_static_dependencies
       $<TARGET_FILE:tensorflow_static>
       $<TARGET_FILE:tf_protos_cc>
@@ -60,39 +92,41 @@ endif(WIN32)
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
 add_library(tensorflow SHARED
-    $<TARGET_OBJECTS:tf_c>
-    $<TARGET_OBJECTS:tf_cc>
-    $<TARGET_OBJECTS:tf_cc_framework>
-    $<TARGET_OBJECTS:tf_cc_ops>
-    $<TARGET_OBJECTS:tf_cc_while_loop>
-    $<TARGET_OBJECTS:tf_core_lib>
-    $<TARGET_OBJECTS:tf_core_cpu>
-    $<TARGET_OBJECTS:tf_core_framework>
-    $<TARGET_OBJECTS:tf_core_ops>
-    $<TARGET_OBJECTS:tf_core_direct_session>
-    $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
-    $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
-    $<TARGET_OBJECTS:tf_core_kernels>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<$<BOOL:${BOOL_WIN32}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>>
-    $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
+    # $<TARGET_OBJECTS:tf_c>
+    # $<TARGET_OBJECTS:tf_cc>
+    # $<TARGET_OBJECTS:tf_cc_framework>
+    # $<TARGET_OBJECTS:tf_cc_ops>
+    # $<TARGET_OBJECTS:tf_cc_while_loop>
+    # $<TARGET_OBJECTS:tf_core_lib>
+    # $<TARGET_OBJECTS:tf_core_cpu>
+    # $<TARGET_OBJECTS:tf_core_framework>
+    # $<TARGET_OBJECTS:tf_core_ops>
+    # $<TARGET_OBJECTS:tf_core_direct_session>
+    # $<TARGET_OBJECTS:tf_tools_transform_graph_lib>
+    # $<$<BOOL:${tensorflow_ENABLE_GRPC_SUPPORT}>:$<TARGET_OBJECTS:tf_core_distributed_runtime>>
+    # $<TARGET_OBJECTS:tf_core_kernels>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<$<BOOL:${BOOL_WIN32}>:$<TARGET_OBJECTS:tf_core_kernels_cpu_only>>>
+    # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
     ${tensorflow_deffile}
 )
 
-target_link_libraries(tensorflow PRIVATE
+target_link_libraries(tensorflow PUBLIC
     ${tf_core_gpu_kernels_lib}
+    ${tensorflow_EXTERNAL_PACKAGES}
     ${tensorflow_EXTERNAL_LIBRARIES}
     tf_protos_cc
+    ${tf_libs} # from OBJECT libs
 )
 
 # There is a bug in GCC 5 resulting in undefined reference to a __cpu_model function when
 # linking to the tensorflow library. Adding the following libraries fixes it.
 # See issue on github: https://github.com/tensorflow/tensorflow/issues/9593
 if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
-    target_link_libraries(tensorflow PRIVATE gcc_s gcc)
+    target_link_libraries(tensorflow PUBLIC gcc_s gcc)
 endif()
 
 if(WIN32)
-  add_dependencies(tensorflow tensorflow_static)
+  target_link_libraries(tensorflow PUBLIC tensorflow_static)
 endif(WIN32)
 
 target_include_directories(tensorflow PUBLIC 

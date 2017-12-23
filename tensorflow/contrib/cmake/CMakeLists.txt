@@ -1,8 +1,19 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.5)
 
+include("cmake/HunterGate.cmake")
+HunterGate(
+  URL "https://github.com/ruslo/hunter/archive/v0.19.210.tar.gz"
+  SHA1 "87eb902de6ca89e1dafc71e475344f523ef67729"
+  LOCAL # cmake/config.cmake
+)
+
 # Project
-project(tensorflow C CXX)
+project(tensorflow VERSION 1.4 LANGUAGES C CXX)
+
+set(TF_LIB_TYPE STATIC) # future use
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Set C++14 as standard for the whole project
 set(CMAKE_CXX_STANDARD 14)
@@ -19,17 +30,17 @@ cmake_policy(SET CMP0022 NEW)
 # Options
 option(tensorflow_VERBOSE "Enable for verbose output" OFF)
 option(tensorflow_ENABLE_SSL_SUPPORT "Enable boringssl support" OFF)
-option(tensorflow_ENABLE_GRPC_SUPPORT "Enable gRPC support" ON)
+option(tensorflow_ENABLE_GRPC_SUPPORT "Enable gRPC support" ON) # need 1.8
 option(tensorflow_ENABLE_HDFS_SUPPORT "Enable HDFS support" OFF)
 option(tensorflow_ENABLE_JEMALLOC_SUPPORT "Enable jemalloc support" OFF)
 option(tensorflow_BUILD_CC_EXAMPLE "Build the C++ tutorial example" ON)
-option(tensorflow_BUILD_PYTHON_BINDINGS "Build the Python bindings" ON)
+option(tensorflow_BUILD_PYTHON_BINDINGS "Build the Python bindings" OFF) # NEED SWIG
 option(tensorflow_BUILD_ALL_KERNELS "Build all OpKernels" ON)
 option(tensorflow_BUILD_CONTRIB_KERNELS "Build OpKernels from tensorflow/contrib/..." ON)
 option(tensorflow_BUILD_CC_TESTS "Build cc unit tests " OFF)
 option(tensorflow_BUILD_PYTHON_TESTS "Build python unit tests " OFF)
 option(tensorflow_BUILD_MORE_PYTHON_TESTS "Build more python unit tests for contrib packages" OFF)
-option(tensorflow_BUILD_SHARED_LIB "Build TensorFlow as a shared library" OFF)
+option(tensorflow_BUILD_SHARED_LIB "Build TensorFlow as a shared library" ON)
 option(tensorflow_OPTIMIZE_FOR_NATIVE_ARCH "Enable compiler optimizations for the native processor architecture (if available)" ON)
 option(tensorflow_WIN_CPU_SIMD_OPTIONS "Enables CPU SIMD instructions")
 option(tensorflow_ENABLE_SNAPPY_SUPPORT "Enable SNAPPY compression support" ON)
@@ -40,12 +51,25 @@ option(tensorflow_ENABLE_GPU "Enable GPU support" OFF)
 set(tensorflow_CUDA_VERSION "9.0" CACHE STRING "CUDA version to build against")
 set(tensorflow_CUDNN_VERSION "7" CACHE STRING "cuDNN version to build against")
 
+set(tensorflow_CUDA_VERSION 9.0 CACHE STRING "CUDA version to build against")
+set(tensorflow_CUDNN_VERSION 7 CACHE STRING "cuDNN version to build against")
+
+message("tensorflow_CUDA_VERSION: ${tensorflow_CUDA_VERSION} ")
+message("tensorflow_CUDA_VERSION: ${tensorflow_CUDA_VERSION} ")
+
 if(HAIKU)
 	option(tensorflow_ENABLE_POSITION_INDEPENDENT_CODE "Enable PIE support" OFF)
 else()
 	option(tensorflow_ENABLE_POSITION_INDEPENDENT_CODE "Enable PIE support" ON)
 endif()
 
+option(tensorflow_ENABLE_XSMM_SUPPORT "Enable XSMM support" OFF)
+
+if(tensorflow_BIULD_SHARED_LIB)
+  set(TF_SDK_TYPE SHARED)
+else()
+  set(TF_SDK_TYPE STATIC)
+endif()
 
 if (NOT WIN32)
   # Threads: defines CMAKE_THREAD_LIBS_INIT and adds -pthread compile option
@@ -93,7 +117,8 @@ function(SHOW_VARIABLES)
 endfunction()
 
 # External dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # Location where external projects will be downloaded
 set (DOWNLOAD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/downloads"
@@ -162,105 +187,309 @@ if (tensorflow_ENABLE_JEMALLOC_SUPPORT)
 endif()
 
 # External dependencies
-include(zlib)
-include(gif)
-include(png)
-include(jpeg)
-include(lmdb)
-include(eigen)
-include(gemmlowp)
-include(jsoncpp)
-include(farmhash)
-include(fft2d)
-include(highwayhash)
-include(nsync)
-include(protobuf)
-include(re2)
-include(cub)
-include(sqlite)
+
+# include(zlib)
+hunter_add_package(ZLIB)
+find_package(ZLIB CONFIG REQUIRED) # ZLIB::zlib
+
+# include(gif)
+hunter_add_package(giflib)
+find_package(giflib CONFIG REQUIRED) # giflib::giflib
+
+# include(png)
+hunter_add_package(PNG)
+find_package(PNG CONFIG REQUIRED) # PNG::png
+
+# include(jpeg)
+hunter_add_package(Jpeg)
+find_package(Jpeg CONFIG REQUIRED) # JPEG::jpeg
+
+# include(lmdb)
+hunter_add_package(lmdb)
+find_package(liblmdb CONFIG REQUIRED) #  liblmdb::lmdb
+
+# include(eigen)
+hunter_add_package(Eigen)
+find_package(Eigen3 CONFIG REQUIRED) # Eigen3::Eigen
+
+# include(gemmlowp)
+hunter_add_package(gemmlowp)
+find_package(gemmlowp CONFIG REQUIRED) # gemmlowp::gemmlowp
+
+# include(jsoncpp)
+hunter_add_package(jsoncpp)
+find_package(jsoncpp CONFIG REQUIRED) # jsoncpp_lib_static
+
+# include(farmhash)
+hunter_add_package(farmhash)
+find_package(farmhash CONFIG REQUIRED) # farmhash::farmhash
+
+# include(fft2d)
+hunter_add_package(fft2d)
+find_package(fft2d CONFIG REQUIRED) # fft2d::fft2d
+
+# include(highwayhash)
+hunter_add_package(highwayhash)
+find_package(highwayhash CONFIG REQUIRED) # highwayhash::highwayhash)
+
+# include(nsync)
+hunter_add_package(nsync)
+find_package(nsync CONFIG REQUIRED) # nsync::nsync)
+
+#########################
+### include(protobuf) ###
+#########################
+# If we cross compile for Android or iOS build a separate 
+# protoc executable on host to compile .proto files in CMake
+if(IOS OR ANDROID)
+  # add cmake/host subdiretcory as host project to install protoc
+  include(hunter_experimental_add_host_project)
+  hunter_experimental_add_host_project(cmake/host)
+
+  add_executable(protobuf::protoc IMPORTED)
+  set_property(TARGET protobuf::protoc APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+  set_target_properties(protobuf::protoc PROPERTIES IMPORTED_LOCATION_RELEASE "${HUNTER_HOST_ROOT}/bin/protoc")
+
+  message(STATUS "Using imported protoc from host: ${HUNTER_HOST_ROOT}/bin/protoc")
+endif(IOS OR ANDROID)
+
+hunter_add_package(Protobuf)
+find_package(Protobuf CONFIG REQUIRED) # TODO
+
+set(PROTOBUF_PROTOC_EXECUTABLE protobuf::protoc)
+get_target_property(PROTOBUF_INCLUDE_DIRS protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
+
+message("DJH PROTOBUF_PROTOC_EXECUTABLE = ${PROTOBUF_PROTOC_EXECUTABLE}") 
+message("DJH PROTOBUF_INCLUDE_DIRS = ${PROTOBUF_INCLUDE_DIRS}")
+
+#########################
+
+# include(re2)
+hunter_add_package(re2)
+find_package(RE2 CONFIG REQUIRED) # RE2::re2
+
+# include(cub)
+# >> Notes: optinal for mobile platforms:
+hunter_add_package(cub)
+find_package(cub CONFIG REQUIRED)
+
+# include(sqlite)
+hunter_add_package(SQLite3)
+find_package(SQLite3 REQUIRED) # TODO
+
 if (tensorflow_BUILD_CC_TESTS)
-  include(googletest)
+  #  include(googletest)
+  hunter_add_package(GTest)
+  find_package(GTest CONFIG REQUIRED) # GTest::main
 endif()
 
+# set(tensorflow_EXTERNAL_LIBRARIES
+#     ${zlib_STATIC_LIBRARIES}
+#     ${gif_STATIC_LIBRARIES}
+#     ${png_STATIC_LIBRARIES}
+#     ${jpeg_STATIC_LIBRARIES}
+#     ${lmdb_STATIC_LIBRARIES}
+#     ${jsoncpp_STATIC_LIBRARIES}
+#     ${farmhash_STATIC_LIBRARIES}
+#     ${fft2d_STATIC_LIBRARIES}
+#     ${highwayhash_STATIC_LIBRARIES}
+#     ${nsync_STATIC_LIBRARIES}
+#     ${protobuf_STATIC_LIBRARIES}
+#     ${re2_STATIC_LIBRARIES}
+#     ${sqlite_STATIC_LIBRARIES}
+# )
+
+set(tensorflow_EXTERNAL_PACKAGES
+  ZLIB::zlib
+  giflib::giflib
+  PNG::png
+  JPEG::jpeg
+  liblmdb::lmdb
+  Eigen3::Eigen
+  gemmlowp::gemmlowp
+  jsoncpp_lib_static
+  farmhash::farmhash
+  fft2d::fft2d
+  highwayhash::highwayhash
+  nsync::nsync
+  protobuf::libprotobuf       # required?
+  protobuf::libprotobuf-lite  # required?
+  protobuf::libprotoc         # required?
+  RE2::re2     
+  cub::cub                    # if(TENSORFLOW_USE_CUDA)
+  )
+
 set(tensorflow_EXTERNAL_LIBRARIES
-    ${zlib_STATIC_LIBRARIES}
-    ${gif_STATIC_LIBRARIES}
-    ${png_STATIC_LIBRARIES}
-    ${jpeg_STATIC_LIBRARIES}
-    ${lmdb_STATIC_LIBRARIES}
-    ${jsoncpp_STATIC_LIBRARIES}
-    ${farmhash_STATIC_LIBRARIES}
-    ${fft2d_STATIC_LIBRARIES}
-    ${highwayhash_STATIC_LIBRARIES}
-    ${nsync_STATIC_LIBRARIES}
-    ${protobuf_STATIC_LIBRARIES}
-    ${re2_STATIC_LIBRARIES}
-    ${sqlite_STATIC_LIBRARIES}
-)
-set(tensorflow_EXTERNAL_DEPENDENCIES
-    zlib_copy_headers_to_destination
-    gif_copy_headers_to_destination
-    png_copy_headers_to_destination
-    jpeg_copy_headers_to_destination
-    lmdb_copy_headers_to_destination
-    jsoncpp
-    farmhash_copy_headers_to_destination
-    highwayhash_copy_headers_to_destination
-    nsync_copy_headers_to_destination
-    protobuf
-    eigen
-    gemmlowp
-    cub
-    fft2d
-    re2
-    sqlite_copy_headers_to_destination
-)
+  sqlite3
+  )
+
+# set(tensorflow_EXTERNAL_DEPENDENCIES
+#     zlib_copy_headers_to_destination
+#     gif_copy_headers_to_destination
+#     png_copy_headers_to_destination
+#     jpeg_copy_headers_to_destination
+#     lmdb_copy_headers_to_destination
+#     jsoncpp
+#     farmhash_copy_headers_to_destination
+#     highwayhash_copy_headers_to_destination
+#     nsync_copy_headers_to_destination
+#     protobuf
+#     eigen
+#     gemmlowp
+#     cub
+#     fft2d
+#     re2
+#     sqlite_copy_headers_to_destination
+# )
+
+function(list_sources srcs)
+  foreach(src ${${srcs}})
+    message("\t${srcs} ${src}")
+  endforeach()
+endfunction(list_sources)
+
+function(target_any_link_libraries target scope libraries)
+  get_target_property(target_type ${target} TYPE)
+  message("TARGET = ${target} TYPE = ${target_type}")
+  
+  string( COMPARE EQUAL "${target_type}" "OBJECT_LIBRARY" is_object_library)
+  if(${is_object_library})
+    foreach(dep ${libraries})
+      #message("dep: ${dep}")
+
+      if(TARGET ${target})
+        message("DJH ${target} is a target")
+      else()
+        message("DJH ${target} is not a target")
+      endif()
+      
+      target_include_directories(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_INCLUDE_DIRECTORIES>)
+      target_compile_definitions(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_COMPILE_DEFINITIONS>)
+      target_include_directories(${target} ${scope} ${EIGEN_ROOT}/include/eigen3) # for unsupported
+    endforeach()
+  else()
+    foreach(dep ${libraries})
+      target_link_libraries(${target} ${scope} ${dep})
+      target_include_directories(${target} ${scope} ${EIGEN_ROOT}/include/eigen3) # for unsupported
+    endforeach() 
+  endif()
+  set_property(TARGET ${target} PROPERTY FOLDER "lib")
+  
+endfunction(target_any_link_libraries)
+
+function(tf_install_lib target)
+  install(TARGETS ${target} EXPORT tensorflow_export
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+endfunction()
 
 include_directories(
     # Source and generated code.
     ${tensorflow_source_dir}
     ${CMAKE_CURRENT_BINARY_DIR}
     # External dependencies.
-    ${zlib_INCLUDE_DIR}
-    ${gif_INCLUDE_DIR}
-    ${png_INCLUDE_DIR}
-    ${jpeg_INCLUDE_DIR}
-    ${lmdb_INCLUDE_DIR}
-    ${eigen_INCLUDE_DIRS}
-    ${gemmlowp_INCLUDE_DIR}
-    ${jsoncpp_INCLUDE_DIR}
-    ${farmhash_INCLUDE_DIR}
-    ${highwayhash_INCLUDE_DIR}
-    ${cub_INCLUDE_DIR}
-    ${nsync_INCLUDE_DIR}
-    ${PROTOBUF_INCLUDE_DIRS}
-    ${re2_INCLUDE_DIR}
-    ${sqlite_INCLUDE_DIR}
+
+    # HUNTER: Linking with hunter packages will provide header paths automatically
+    
+#     ${zlib_INCLUDE_DIR}
+#     ${gif_INCLUDE_DIR}
+#     ${png_INCLUDE_DIR}
+#     ${jpeg_INCLUDE_DIR}
+#     ${lmdb_INCLUDE_DIR}
+#     ${eigen_INCLUDE_DIRS}
+#     ${gemmlowp_INCLUDE_DIR}
+#     ${jsoncpp_INCLUDE_DIR}
+#     ${farmhash_INCLUDE_DIR}
+#     ${highwayhash_INCLUDE_DIR}
+#     ${cub_INCLUDE_DIR}
+#     ${nsync_INCLUDE_DIR}
+#     ${PROTOBUF_INCLUDE_DIRS}
+#     ${re2_INCLUDE_DIR}
+#     ${sqlite_INCLUDE_DIR}
 )
 
 if(tensorflow_ENABLE_SSL_SUPPORT)
-  include(boringssl)
-  list(APPEND tensorflow_EXTERNAL_LIBRARIES ${boringssl_STATIC_LIBRARIES})
-  list(APPEND tensorflow_EXTERNAL_DEPENDENCIES boringssl)
-  include_directories(${boringssl_INCLUDE_DIR})
+  #   include(boringssl)
+  #   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${boringssl_STATIC_LIBRARIES})
+  #   list(APPEND tensorflow_EXTERNAL_DEPENDENCIES boringssl)
+  #   include_directories(${boringssl_INCLUDE_DIR})
+  hunter_add_package(BoringSSL)
+  find_package(BoringSSL CONFIG REQUIRED)
+  list(APPEND tensorflow_EXTERNAL_PACKAGES BoringSSL::ssl BoringSSL::crypto)
 endif()
 if(tensorflow_ENABLE_GRPC_SUPPORT)
-  include(grpc)
-  list(APPEND tensorflow_EXTERNAL_LIBRARIES ${grpc_STATIC_LIBRARIES})
-  list(APPEND tensorflow_EXTERNAL_DEPENDENCIES grpc)
-  include_directories(${GRPC_INCLUDE_DIRS})
+  #   include(grpc)
+  #   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${grpc_STATIC_LIBRARIES})
+  #   list(APPEND tensorflow_EXTERNAL_DEPENDENCIES grpc)
+  #   include_directories(${GRPC_INCLUDE_DIRS})
+  hunter_add_package(gRPC)
+  find_package(gRPC CONFIG REQUIRED)
+  list(APPEND tensorflow_EXTERNAL_PACKAGES
+    gRPC::gpr
+    gRPC::grpc
+    gRPC::grpc_cronet
+    gRPC::grpc_unsecure
+    gRPC::grpc++
+    gRPC::grpc++_cronet
+    gRPC::grpc++_error_details
+    gRPC::grpc++_reflection
+    gRPC::grpc++_unsecure
+    gRPC::grpc_plugin_support
+    #gRPC::grpc_csharp_ext
+    #gRPC::check_epollexclusive
+    #gRPC::gen_hpack_tables
+    #gRPC::gen_legal_metadata_characters
+    #gRPC::gen_percent_encoding_tables
+    #gRPC::grpc_create_jwt
+    #gRPC::grpc_print_google_default_creds_token
+    #gRPC::grpc_verify_jwt
+    #gRPC::grpc_cpp_plugin
+    #gRPC::grpc_csharp_plugin
+    #gRPC::grpc_node_plugin
+    #gRPC::grpc_objective_c_plugin
+    #gRPC::grpc_php_plugin
+    #gRPC::grpc_python_plugin
+    #gRPC::grpc_ruby_plugin
+    )
+  
+  find_program(GRPC_CPP_PLUGIN
+    grpc_cpp_plugin
+    HINTS
+    ${CMAKE_FIND_ROOT_PATH}/bin
+    NO_DEFAULT_PATH
+    )
+  
+  add_executable(grpc_cpp_plugin IMPORTED)
+  set_property(TARGET grpc_cpp_plugin APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
+  set_target_properties(grpc_cpp_plugin PROPERTIES IMPORTED_LOCATION_RELEASE "${CMAKE_FIND_ROOT_PATH}/bin/grpc_cpp_plugin")
+
+  message("HUNTER_ROOT = ${HUNTER_ROOT}")
+  message("HUNTER_HOST_ROOT/bin/grpc_cpp_plugin: ${HUNTER_HOST_ROOT}/bin/grpc_cpp_plugin ")
+  
+  # find_program(grpc_cpp_plugin_exe NAMES grpc_cpp_plugin)
+  # if(grpc_cpp_plugin_exe-NOTFOUND)
+  #   message(FATAL_ERROR "Couldn't find grpc_cpp_plugin")
+  # endif()
+  
 endif()
 if(tensorflow_ENABLE_JEMALLOC_SUPPORT)
-  include(jemalloc)
-  list(APPEND tensorflow_EXTERNAL_LIBRARIES ${jemalloc_STATIC_LIBRARIES})
-  list(APPEND tensorflow_EXTERNAL_DEPENDENCIES jemalloc)
-  include_directories(${jemalloc_INCLUDE_DIRS})
+  #   include(jemalloc)
+  #   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${jemalloc_STATIC_LIBRARIES})
+  #   list(APPEND tensorflow_EXTERNAL_DEPENDENCIES jemalloc)
+  #   include_directories(${jemalloc_INCLUDE_DIRS})
+  hunter_add_package(jemalloc)
+  find_package(jemalloc CONFIG REQUIRED)
+  list(APPEND tensorflow_EXTERNAL_PACKAGES jemalloc::jemalloc)
 endif()
 if(tensorflow_ENABLE_SNAPPY_SUPPORT)
-  include(snappy)
-  list(APPEND tensorflow_EXTERNAL_LIBRARIES ${snappy_STATIC_LIBRARIES})
-  list(APPEND tensorflow_EXTERNAL_DEPENDENCIES snappy)
-  include_directories(${snappy_INCLUDE_DIR})
+  #   include(snappy)
+  #   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${snappy_STATIC_LIBRARIES})
+  #   list(APPEND tensorflow_EXTERNAL_DEPENDENCIES snappy)
+  #   include_directories(${snappy_INCLUDE_DIR})
+  hunter_add_package(Snappy)
+  find_package(Snappy CONFIG REQUIRED)
+  list(APPEND tensorflow_EXTERNAL_PACKAGES Snappy::snappy)
 endif()
 if(WIN32)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES wsock32 ws2_32 shlwapi)
@@ -271,6 +500,20 @@ endif()
 if(HAIKU)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES network)
 endif()
+
+
+# Platform checks
+string(COMPARE EQUAL "${CMAKE_SYSTEM_NAME}" "Darwin" is_osx)
+
+if(is_osx)
+  set(XCODE_TAG "_osx")
+  set(use_nccl FALSE)
+else()
+  set(XCODE_TAG "")  
+  set(use_nccl TRUE)
+endif()
+
+option(tensorflow_USE_NCCL "Use NCCL lib" ${use_ncc})
 
 if (tensorflow_ENABLE_GPU)
   if (NOT WIN32)
@@ -307,13 +550,15 @@ if (tensorflow_ENABLE_GPU)
   else (WIN32)
     set(CUDNN_INCLUDE "${tensorflow_CUDNN_INCLUDE}")
 
-    find_library(nccl_STATIC_LIBRARY NAMES libnccl_static.a PATHS ${tensorflow_PATH_NCCL_STATIC_LIB} ${CUDA_TOOLKIT_ROOT_DIR})
-    if (NOT nccl_STATIC_LIBRARY)
-      message(FATAL_ERROR "NCCL is required for GPU-build")
-    else (NOT nccl_STATIC_LIBRARY)
-      message("nccl-static: ${nccl_STATIC_LIBRARY}")
-      # something like /usr/lib64/libnccl_static.a
-    endif (NOT nccl_STATIC_LIBRARY)
+    if(tensorflow_USE_NCCL)
+      find_library(nccl_STATIC_LIBRARY NAMES libnccl_static.a PATHS ${tensorflow_PATH_NCCL_STATIC_LIB} ${CUDA_TOOLKIT_ROOT_DIR})
+      if (NOT nccl_STATIC_LIBRARY)
+        message(FATAL_ERROR "NCCL is required for GPU-build")
+      else (NOT nccl_STATIC_LIBRARY)
+        message("nccl-static: ${nccl_STATIC_LIBRARY}")
+        # something like /usr/lib64/libnccl_static.a
+      endif (NOT nccl_STATIC_LIBRARY)
+    endif()
 
     find_library(cudnn_STATIC_LIBRARY NAMES libcudnn_static.a PATHS ${tensorflow_PATH_CUDNN_STATIC_LIB} ${CUDA_TOOLKIT_ROOT_DIR})
     if (NOT cudnn_STATIC_LIBRARY)
@@ -329,9 +574,23 @@ if (tensorflow_ENABLE_GPU)
       message("culibos-static: ${culibos_STATIC_LIBRARY}")
     endif (NOT culibos_STATIC_LIBRARY)
 
+    if(APPLE)
+      # cupti_wrapper.h : "extras/CUPTI/include/cupti.h"
+      include_directories(${CUDA_TOOLKIT_ROOT_DIR})
+    endif()
+    
     include_directories(${CUDNN_INCLUDE})
-    set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_CUDA_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_CUFFT_LIBRARIES}
-      ${CUDA_curand_LIBRARY} ${CUDA_cupti_LIBRARY} ${CUDA_cusolver_LIBRARY} ${cudnn_STATIC_LIBRARY} ${culibos_STATIC_LIBRARY} ${nccl_STATIC_LIBRARY})
+    set(CUDA_LIBRARIES
+      ${CUDA_LIBRARIES}
+      ${CUDA_CUDA_LIBRARY}
+      ${CUDA_CUBLAS_LIBRARIES}
+      ${CUDA_CUFFT_LIBRARIES}
+      ${CUDA_curand_LIBRARY}
+      ${CUDA_cupti_LIBRARY}
+      ${CUDA_cusolver_LIBRARY}
+      ${cudnn_STATIC_LIBRARY}
+      ${culibos_STATIC_LIBRARY}
+      ${nccl_STATIC_LIBRARY})
   endif (WIN32)
 
   # Remove "." from CUDA version variable.
@@ -362,6 +621,9 @@ if (tensorflow_ENABLE_GPU)
     )
   else(WIN32)
     # Linux has slightly differnt install paths than Windows
+
+    message("CUDA_TOOLKIT_TARGET_DIR: ${CUDA_TOOLKIT_TARGET_DIR}")
+    message("CUDNN_INCLUDE: ${CUDNN_INCLUDE}")
     FILE(COPY
       ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
       ${CUDA_TOOLKIT_TARGET_DIR}/include/cublas_v2.h ${CUDNN_INCLUDE}/cudnn.h
@@ -402,6 +664,9 @@ if(NOT ${PYTHONINTERP_FOUND})
     message(FATAL_ERROR "CMake was unable to find a python interpreter.")
 endif()
 
+set(tf_src_regex "^.+\\.cc$")
+include(resolve_duplicate_filenames.cmake)
+
 # Let's get to work!
 include(tf_core_framework.cmake)
 include(tf_stream_executor.cmake)
@@ -413,6 +678,7 @@ include(tf_core_kernels.cmake)
 if(tensorflow_ENABLE_GRPC_SUPPORT)
   include(tf_core_distributed_runtime.cmake)
 endif()
+
 # We include tf_cc_ops first, because tf_c depends on tf_cc.
 include(tf_cc_ops.cmake)
 include(tf_c.cmake)
@@ -426,9 +692,17 @@ include(tf_tools.cmake)
 if(tensorflow_BUILD_PYTHON_BINDINGS)
   include(tf_python.cmake)
 endif()
-if(tensorflow_BUILD_SHARED_LIB)
-  include(tf_shared_lib.cmake)
-endif()
+
+# This is the only file that exports a tensorflow lib
+# We modify this such that a lib is always created
+# where tensorflow_BUILD_SHARED_LIB toggles the
+# SHARED vs STATIC target type.
+#if(tensorflow_BUILD_SHARED_LIB)
+include(tf_shared_lib.cmake)
+#endif()
+  
 if(tensorflow_BUILD_CC_TESTS OR tensorflow_BUILD_PYTHON_TESTS)
   include(tf_tests.cmake)
 endif()
+
+message("DJH: totally done")

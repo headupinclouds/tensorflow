@@ -23,7 +23,8 @@ file(GLOB tf_grappler_srcs
    "${tensorflow_source_dir}/tensorflow/python/grappler/model_analyzer.cc"
    "${tensorflow_source_dir}/tensorflow/python/grappler/model_analyzer.h"
  )
-
-add_library(tf_grappler OBJECT ${tf_grappler_srcs})
-
-add_dependencies(tf_grappler tf_core_cpu)
+resolve_duplicate_filenames(tf_grappler_srcs "${tf_src_regex}")
+add_library(tf_grappler ${TF_LIB_TYPE} ${tf_grappler_srcs})
+tf_install_lib(tf_grappler)
+target_link_libraries(tf_grappler PUBLIC tf_core_cpu)
+target_any_link_libraries(tf_grappler PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")

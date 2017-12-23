@@ -15,7 +15,7 @@ limitations under the License.
 #ifndef THIRD_PARTY_TENSORFLOW_CORE_KERNELS_NEON_DEPTHWISECONV_H_
 #define THIRD_PARTY_TENSORFLOW_CORE_KERNELS_NEON_DEPTHWISECONV_H_
 
-#include "public/gemmlowp.h"
+#include "gemmlowp/public/gemmlowp.h"
 #include "tensorflow/core/kernels/neon/types.h"
 
 #if defined(__ARM_NEON__) || defined(__ARM_NEON)

@@ -29,8 +29,15 @@ file(GLOB_RECURSE tf_core_profiler_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/profiler/internal/advisor/*test.cc"
     "${tensorflow_source_dir}/tensorflow/core/profiler/internal/print_model_analysis.cc"
     "${tensorflow_source_dir}/tensorflow/core/profiler/internal/print_model_analysis.h"
-)
+    )
+  
 list(REMOVE_ITEM tf_core_profiler_srcs ${tf_core_profiler_exclude_srcs})
 
-add_library(tf_core_profiler OBJECT ${tf_core_profiler_srcs})
-add_dependencies(tf_core_profiler tf_core_lib)
+list_sources(tf_core_profiler_srcs)
+list_sources(tf_core_profiler_exclude_srcs)
+
+resolve_duplicate_filenames(tf_core_profiler_srcs "${tf_src_regex}")
+add_library(tf_core_profiler ${TF_LIB_TYPE} ${tf_core_profiler_srcs})
+tf_install_lib(tf_core_profiler)
+target_link_libraries(tf_core_profiler PUBLIC tf_core_lib)
+target_any_link_libraries(tf_core_profiler PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")

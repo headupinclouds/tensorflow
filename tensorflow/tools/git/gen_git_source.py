@@ -240,11 +240,12 @@ def raw_generate(output_file):
 
   Args:
     output_file: Output filename for the version info cc
+
   """
 
-  git_version = get_git_version(".")
+  #git_version = get_git_version(".")
+  git_version = get_git_version("../../../../../")
   write_version_info(output_file, git_version)
-
 
 parser = argparse.ArgumentParser(description="""Git hash injection into bazel.
 If used with --configure <path> will search for git directory and put symlinks

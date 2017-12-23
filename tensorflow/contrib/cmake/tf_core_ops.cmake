@@ -44,7 +44,7 @@ set(tf_op_lib_names
     "state_ops"
     "stateless_random_ops"
     "string_ops"
-		"summary_ops"
+	"summary_ops"
     "training_ops"
 )
 
@@ -55,15 +55,19 @@ foreach(tf_op_lib_name ${tf_op_lib_names})
     file(GLOB tf_${tf_op_lib_name}_srcs
         "${tensorflow_source_dir}/tensorflow/core/ops/${tf_op_lib_name}.cc"
     )
-
-    add_library(tf_${tf_op_lib_name} OBJECT ${tf_${tf_op_lib_name}_srcs})
-
-    add_dependencies(tf_${tf_op_lib_name} tf_core_framework)
+    resolve_duplicate_filenames(tf_core_kernels_srcs tf_${tf_op_lib_name}_srcs "${tf_src_regex}")
+    add_library(tf_${tf_op_lib_name} ${TF_LIB_TYPE} ${tf_${tf_op_lib_name}_srcs})
+    tf_install_lib(tf_${tf_op_lib_name})
+    target_link_libraries(tf_${tf_op_lib_name} PUBLIC tf_core_framework)
+    target_any_link_libraries(tf_${tf_op_lib_name} PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 endforeach()
 
 function(GENERATE_CONTRIB_OP_LIBRARY op_lib_name cc_srcs)
-    add_library(tf_contrib_${op_lib_name}_ops OBJECT ${cc_srcs})
-    add_dependencies(tf_contrib_${op_lib_name}_ops tf_core_framework)
+    resolve_duplicate_filenames(cc_srcs "${tf_src_regex}")
+    add_library(tf_contrib_${op_lib_name}_ops ${TF_LIB_TYPE} ${cc_srcs})
+    tf_install_lib(tf_contrib_${op_lib_name}_ops)
+    target_link_libraries(tf_contrib_${op_lib_name}_ops PUBLIC tf_core_framework)
+    target_any_link_libraries(tf_contrib_${op_lib_name}_ops PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 endfunction()
 
 file(GLOB_RECURSE tensor_forest_hybrid_srcs
@@ -114,9 +118,11 @@ file(GLOB_RECURSE tf_user_ops_srcs
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*.cc"
 )
 
-add_library(tf_user_ops OBJECT ${tf_user_ops_srcs})
-
-add_dependencies(tf_user_ops tf_core_framework)
+resolve_duplicate_filenames(tf_user_ops_srcs "${tf_src_regex}")
+add_library(tf_user_ops ${TF_LIB_TYPE} ${tf_user_ops_srcs})
+tf_install_lib(tf_user_ops)
+target_link_libraries(tf_user_ops PUBLIC tf_core_framework)
+target_any_link_libraries(tf_user_ops PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 ########################################################
 # tf_core_ops library
@@ -136,13 +142,18 @@ file(GLOB_RECURSE tf_core_ops_exclude_srcs
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*test*.cc"
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*main.cc"
     "${tensorflow_source_dir}/tensorflow/core/user_ops/*.cu.cc"
-)
+    )
 
 list(REMOVE_ITEM tf_core_ops_srcs ${tf_core_ops_exclude_srcs})
 
-add_library(tf_core_ops OBJECT ${tf_core_ops_srcs})
+list_sources(tf_core_ops_srcs)
+list_sources(tf_core_ops_exclude_srcs)
 
-add_dependencies(tf_core_ops tf_core_cpu)
+resolve_duplicate_filenames(tf_core_ops_srcs "${tf_src_regex}")
+add_library(tf_core_ops ${TF_LIB_TYPE} ${tf_core_ops_srcs})
+tf_install_lib(tf_core_ops)
+target_link_libraries(tf_core_ops PUBLIC tf_core_cpu)
+target_any_link_libraries(tf_core_ops PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 ########################################################
 # tf_debug_ops library
@@ -152,6 +163,8 @@ file(GLOB tf_debug_ops_srcs
     "${tensorflow_source_dir}/tensorflow/core/ops/debug_ops.cc"
 )
 
-add_library(tf_debug_ops OBJECT ${tf_debug_ops_srcs})
-
-add_dependencies(tf_debug_ops tf_core_framework)
+resolve_duplicate_filenames(tf_debug_ops_srcs "${tf_src_regex}")
+add_library(tf_debug_ops ${TF_LIB_TYPE} ${tf_debug_ops_srcs})
+tf_install_lib(tf_debug_ops)
+target_link_libraries(tf_debug_ops PUBLIC tf_core_framework)
+target_any_link_libraries(tf_debug_ops PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")

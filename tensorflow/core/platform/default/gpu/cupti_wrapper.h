@@ -20,7 +20,7 @@ limitations under the License.
 
 #include <stddef.h>
 #include <stdint.h>
-#if defined(WIN32)
+#if defined(WIN32) ||  defined(__APPLE__)
 #include "extras/CUPTI/include/cupti.h"
 #else
 #include "cuda/extras/CUPTI/include/cupti.h"

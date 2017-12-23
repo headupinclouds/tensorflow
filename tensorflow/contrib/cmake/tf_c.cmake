@@ -29,22 +29,28 @@ set(tf_c_srcs
     "${tensorflow_source_dir}/tensorflow/c/tf_status_helper.cc"
     "${tensorflow_source_dir}/tensorflow/c/tf_status_helper.h"
 )
-
-add_library(tf_c OBJECT ${tf_c_srcs})
-add_dependencies(
-  tf_c
+resolve_duplicate_filenames(tf_c_srcs "${tf_src_regex}")
+add_library(tf_c ${TF_LIB_TYPE} ${tf_c_srcs})
+tf_install_lib(tf_c)
+target_link_libraries(
+  tf_c PUBLIC
   tf_cc_framework
   tf_cc_while_loop
   tf_core_lib
   tf_protos_cc)
+target_any_link_libraries(tf_c PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
-add_library(tf_c_python_api OBJECT
+set(tf_c_python_api_srcs
   "${tensorflow_source_dir}/tensorflow/c/python_api.cc"
   "${tensorflow_source_dir}/tensorflow/c/python_api.h"
-)
-add_dependencies(
-  tf_c_python_api
+  )
+resolve_duplicate_filenames(tf_c_python_api_srcs "${tf_src_regex}")
+add_library(tf_c_python_api ${TF_LIB_TYPE} ${tf_c_python_api_srcs})
+tf_install_lib(tf_c_python_api)
+target_link_libraries(
+  tf_c_python_api PUBLIC
   tf_c
   tf_core_lib
   tf_core_framework
   tf_protos_cc)
+target_any_link_libraries(tf_c_python_api PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")

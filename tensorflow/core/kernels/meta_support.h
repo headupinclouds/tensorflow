@@ -16,11 +16,11 @@ limitations under the License.
 #ifndef THIRD_PARTY_TENSORFLOW_CONTRIB_QUANTIZATION_KERNELS_META_SUPPORT_H_
 #define THIRD_PARTY_TENSORFLOW_CONTRIB_QUANTIZATION_KERNELS_META_SUPPORT_H_
 
-#include "meta/multi_thread_gemm.h"
-#include "meta/multi_thread_transform.h"
-#include "meta/quantized_mul_kernels.h"
-#include "meta/streams.h"
-#include "meta/transform_kernels.h"
+#include "gemmlowp/meta/multi_thread_gemm.h"
+#include "gemmlowp/meta/multi_thread_transform.h"
+#include "gemmlowp/meta/quantized_mul_kernels.h"
+#include "gemmlowp/meta/streams.h"
+#include "gemmlowp/meta/transform_kernels.h"
 
 #include "tensorflow/core/framework/numeric_types.h"
 

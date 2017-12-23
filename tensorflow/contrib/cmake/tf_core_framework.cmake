@@ -39,7 +39,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
              "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb.h"
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${CMAKE_CURRENT_BINARY_DIR} -I ${ROOT_DIR} ${ABS_FIL} -I ${PROTOBUF_INCLUDE_DIRS}
-      DEPENDS ${ABS_FIL} protobuf
+      DEPENDS ${ABS_FIL} #protobuf
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
   endforeach()
@@ -49,17 +49,27 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-if(NOT WIN32)
+message("PROTOBUF_PROTOC: ${PROTOBUF_PROTOC_EXECUTABLE} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+message("PROTOBUF_INCLUDE_DIRS: ${PROTOBUF_INCLUDE_DIRS} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+if(tensorflow_ENABLE_GRPC_SUPPORT)
   function(RELATIVE_PROTOBUF_GENERATE_GRPC_CPP SRCS HDRS ROOT_DIR)
     if(NOT ARGN)
       message(SEND_ERROR "Error: RELATIVE_PROTOBUF_GENERATE_GRPC_CPP() called without any proto files")
       return()
     endif()
 
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: SRCS: ${SRCS} ${${SRCS}} #####################")
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: HDRS: ${HDRS} ${${HDRS}} #####################")
+    message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: ROOT_DIR: ${ROOT_DIR} #####################")
+
     set(${SRCS})
     set(${HDRS})
     foreach(FIL ${ARGN})
       set(ABS_FIL ${ROOT_DIR}/${FIL})
+
+      message("RELATIVE_PROTOBUF_GENERATE_GRPC_CPP: ABS_FIL: ${ABS_FIL} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")    
+      
       get_filename_component(FIL_WE ${FIL} NAME_WE)
       get_filename_component(FIL_DIR ${ABS_FIL} PATH)
       file(RELATIVE_PATH REL_DIR ${ROOT_DIR} ${FIL_DIR})
@@ -75,8 +85,8 @@ if(NOT WIN32)
                "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb.cc"
                "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb.h"
         COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-        ARGS --grpc_out ${CMAKE_CURRENT_BINARY_DIR} --cpp_out ${CMAKE_CURRENT_BINARY_DIR} --plugin protoc-gen-grpc=${GRPC_BUILD}/grpc_cpp_plugin -I ${ROOT_DIR} ${ABS_FIL} -I ${PROTOBUF_INCLUDE_DIRS}
-        DEPENDS ${ABS_FIL} protobuf grpc
+        ARGS --grpc_out ${CMAKE_CURRENT_BINARY_DIR} --cpp_out ${CMAKE_CURRENT_BINARY_DIR} --plugin protoc-gen-grpc=${GRPC_CPP_PLUGIN} -I ${ROOT_DIR} ${ABS_FIL} -I ${PROTOBUF_INCLUDE_DIRS}
+        DEPENDS ${ABS_FIL} #protobuf grpc
         COMMENT "Running C++ protocol buffer grpc compiler on ${FIL}"
         VERBATIM )
     endforeach()
@@ -89,9 +99,13 @@ endif()
 
 function(RELATIVE_PROTOBUF_TEXT_GENERATE_CPP SRCS HDRS ROOT_DIR)
   if(NOT ARGN)
-      message(SEND_ERROR "Error: RELATIVE_PROTOBUF_TEXT_GENERATE_CPP() called without any proto files")
+      message(SEND_ERROR "Error: RELATIVE_PROTOBUF_TEXT_GENERATE_CPP RELATIVE_PROTOBUF_TEXT_GENERATE_CPP() called without any proto files")
     return()
   endif()
+
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : SRCS ${SRCS}")
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : HDRS ${HDRS}")
+  message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP : ROOT_DIR ${ROOT_DIR}")
 
   set(${SRCS})
   set(${HDRS})
@@ -104,6 +118,10 @@ function(RELATIVE_PROTOBUF_TEXT_GENERATE_CPP SRCS HDRS ROOT_DIR)
     list(APPEND ${SRCS} "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc")
     list(APPEND ${HDRS} "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h")
 
+    #message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP: ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h")
+
+    message("RELATIVE_PROTOBUF_TEXT_GENERATE_CPP: COMMAND ${PROTO_TEXT_EXE} ARGS ${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR} ${REL_DIR} ${ABS_FIL} ${ROOT_DIR}/tensorflow/tools/proto_text/placeholder.txt")
+    
     add_custom_command(
       OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.cc"
              "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb_text.h"
@@ -127,10 +145,13 @@ file(GLOB_RECURSE tf_protos_cc_srcs RELATIVE ${tensorflow_source_dir}
     "${tensorflow_source_dir}/tensorflow/core/*.proto"
     "${tensorflow_source_dir}/tensorflow/contrib/boosted_trees/proto/*.proto"
 )
+
+message("DJH: tensorflow_source_dir = ${tensorflow_source_dir}")
+message("DJH: tf_protos_cc_srcs = ${tf_protos_cc_srcs}")
+  
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
     ${tensorflow_source_dir} ${tf_protos_cc_srcs}
 )
-
 
 set(PROTO_TEXT_EXE "proto_text")
 set(tf_proto_text_srcs
@@ -168,11 +189,16 @@ set(tf_proto_text_srcs
     "tensorflow/core/util/memmapped_file_system.proto"
     "tensorflow/core/util/saved_tensor_slice.proto"
 )
+
+
+message("DJH: tensorflow_source_dir = ${tensorflow_source_dir}")
+message("DJH: tf_proto_text_srcs = ${tf_proto_text_srcs}")
+    
 RELATIVE_PROTOBUF_TEXT_GENERATE_CPP(PROTO_TEXT_SRCS PROTO_TEXT_HDRS
     ${tensorflow_source_dir} ${tf_proto_text_srcs}
 )
 
-if(WIN32)
+if(NOT tensorflow_ENABLE_GRPC_SUPPORT)
   add_library(tf_protos_cc ${PROTO_SRCS} ${PROTO_HDRS})
 else()
   file(GLOB_RECURSE tf_protos_grpc_cc_srcs RELATIVE ${tensorflow_source_dir}
@@ -183,6 +209,10 @@ else()
   )
   add_library(tf_protos_cc ${PROTO_GRPC_SRCS} ${PROTO_GRPC_HDRS} ${PROTO_SRCS} ${PROTO_HDRS})
 endif()
+tf_install_lib(tf_protos_cc)
+
+target_link_libraries(tf_protos_cc PUBLIC ${tensorflow_EXTERNAL_PACKAGES} ${tensorflow_EXTERNAL_LIBRARIES})
+set_property(TARGET tf_protos_cc PROPERTY FOLDER "lib")
 
 ########################################################
 # tf_core_lib library
@@ -217,17 +247,22 @@ endif()
 
 file(GLOB tf_core_platform_exclude_srcs
   "${tensorflow_source_dir}/tensorflow/core/platform/variant_coding.cc")
+
 list(REMOVE_ITEM tf_core_platform_srcs ${tf_core_platform_exclude_srcs})
+
+list_sources(tf_core_platform_exclude_srcs)
+list_sources(tf_core_platform_srcs)
 
 list(APPEND tf_core_lib_srcs ${tf_core_platform_srcs})
 
-if(UNIX)
+message("CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} == Darwin")
+if(UNIX OR (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
   file(GLOB tf_core_platform_posix_srcs
       "${tensorflow_source_dir}/tensorflow/core/platform/posix/*.h"
       "${tensorflow_source_dir}/tensorflow/core/platform/posix/*.cc"
   )
   list(APPEND tf_core_lib_srcs ${tf_core_platform_posix_srcs})
-endif(UNIX)
+endif()
 
 if(WIN32)
   file(GLOB tf_core_platform_windows_srcs
@@ -265,22 +300,38 @@ file(GLOB_RECURSE tf_core_lib_test_srcs
 )
 list(REMOVE_ITEM tf_core_lib_srcs ${tf_core_lib_test_srcs})
 
-add_library(tf_core_lib OBJECT ${tf_core_lib_srcs})
-add_dependencies(tf_core_lib ${tensorflow_EXTERNAL_DEPENDENCIES} tf_protos_cc)
+resolve_duplicate_filenames(tf_core_lib_srcs "${tf_src_regex}")
+add_library(tf_core_lib ${TF_LIB_TYPE} ${tf_core_lib_srcs})
+tf_install_lib(tf_core_lib)
+#target_link_libraries(tf_core_lib ${tensorflow_EXTERNAL_DEPENDENCIES} tf_protos_cc)
+target_link_libraries(tf_core_lib PUBLIC tf_protos_cc)
+
+target_any_link_libraries(tf_core_lib PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 # Tricky setup to force always rebuilding
 # force_rebuild always runs forcing ${VERSION_INFO_CC} target to run
 # ${VERSION_INFO_CC} would cache, but it depends on a phony never produced
 # target.
-set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+set(gen_git_source ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py)
+set(version_info_cc_tmp ${CMAKE_CURRENT_BINARY_DIR}/version_info.cc)
 add_custom_target(force_rebuild_target ALL DEPENDS ${VERSION_INFO_CC})
+set_property(TARGET force_rebuild_target PROPERTY FOLDER "custom")
+
 add_custom_command(OUTPUT __force_rebuild COMMAND ${CMAKE_COMMAND} -E echo)
 add_custom_command(OUTPUT
-    ${VERSION_INFO_CC}
-    COMMAND ${PYTHON_EXECUTABLE} ${tensorflow_source_dir}/tensorflow/tools/git/gen_git_source.py
-    --raw_generate ${VERSION_INFO_CC}
+    ${version_info_cc_tmp}
+    COMMAND ${PYTHON_EXECUTABLE} ${gen_git_source} --raw_generate ${version_info_cc_tmp}
     DEPENDS __force_rebuild)
-set(tf_version_srcs ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+
+
+set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
+add_custom_command(OUTPUT
+  "${VERSION_INFO_CC}"
+  DEPENDS "${version_info_cc_tmp}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${version_info_cc_tmp}" "${VERSION_INFO_CC}"
+  ) 
+  
+set(tf_version_srcs ${VERSION_INFO_CC})
 
 ########################################################
 # tf_core_framework library
@@ -321,18 +372,24 @@ file(GLOB_RECURSE tf_core_framework_exclude_srcs
 
 list(REMOVE_ITEM tf_core_framework_srcs ${tf_core_framework_exclude_srcs})
 
-add_library(tf_core_framework OBJECT
+list_sources(tf_core_framework_exclude_srcs)
+list_sources(tf_core_framework_srcs)      
+
+set(tf_core_framework_srcs
     ${tf_core_framework_srcs}
     ${tf_version_srcs}
     ${PROTO_TEXT_HDRS}
     ${PROTO_TEXT_SRCS})
-add_dependencies(tf_core_framework
-    tf_core_lib
-    proto_text
-)
+resolve_duplicate_filenames(tf_core_framework_srcs "${tf_src_regex}")
+add_library(tf_core_framework ${TF_LIB_TYPE} ${tf_core_framework_srcs})
+tf_install_lib(tf_core_framework)
+target_link_libraries(tf_core_framework PUBLIC tf_core_lib)
+add_dependencies(tf_core_framework proto_text)
+
+target_any_link_libraries(tf_core_framework PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 if(WIN32)
   # Cmake > 3.6 will quote this as -D"__VERSION__=\"MSVC\"" which nvcc fails on.
   # Instead of defining this global, limit it to tf_core_framework where its used.
-  target_compile_definitions(tf_core_framework PRIVATE __VERSION__="MSVC")
+  target_compile_definitions(tf_core_framework PUBLIC __VERSION__="MSVC")
 endif()

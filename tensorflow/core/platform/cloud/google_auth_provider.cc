@@ -21,7 +21,7 @@ limitations under the License.
 #include <sys/types.h>
 #endif
 #include <fstream>
-#include "include/json/json.h"
+#include "json/json.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/io/path.h"
 #include "tensorflow/core/lib/strings/base64.h"
