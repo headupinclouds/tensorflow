@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef TENSORFLOW_KERNELS_SPARSE_MATMUL_OP_H_
 #define TENSORFLOW_KERNELS_SPARSE_MATMUL_OP_H_
 
-#include "third_party/eigen3/Eigen/Core"
+#include "eigen3/Eigen/Core"
 #include "tensorflow/core/platform/types.h"
 
 #if defined(PLATFORM_WINDOWS)

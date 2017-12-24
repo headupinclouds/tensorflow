@@ -31,7 +31,7 @@ limitations under the License.
 
 #include <array>
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #define GEMMLOWP_ALLOW_SLOW_SCALAR_FALLBACK
 #include "gemmlowp/public/gemmlowp.h"
 #include "tensorflow/core/framework/tensor.h"

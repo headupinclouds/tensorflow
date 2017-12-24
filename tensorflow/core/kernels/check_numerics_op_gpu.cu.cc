@@ -22,7 +22,7 @@ limitations under the License.
 #include <math.h>
 #include <algorithm>
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/platform/types.h"
 
 namespace tensorflow {

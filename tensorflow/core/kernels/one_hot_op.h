@@ -19,7 +19,7 @@ limitations under the License.
 #define TENSORFLOW_KERNELS_ONE_HOT_OP_H_
 // Generator definition for OneHotOp, must be compilable by nvcc.
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/tensor_types.h"
 #include "tensorflow/core/platform/types.h"
 

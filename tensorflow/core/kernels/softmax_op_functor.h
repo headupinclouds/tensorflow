@@ -17,7 +17,7 @@ limitations under the License.
 #define TENSORFLOW_KERNELS_SOFTMAX_OP_FUNCTOR_H_
 // Functor definition for SoftmaxOp, must be compilable by nvcc.
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/tensor_types.h"
 
 namespace tensorflow {

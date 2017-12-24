@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef TENSORFLOW_KERNELS_CONV_OPS_H_
 #define TENSORFLOW_KERNELS_CONV_OPS_H_
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/resource_mgr.h"
 #include "tensorflow/core/platform/mem.h"
 #include "tensorflow/core/util/tensor_format.h"

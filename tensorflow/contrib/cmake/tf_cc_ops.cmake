@@ -39,9 +39,15 @@ set(tf_cc_op_gen_main_srcs
     "${tensorflow_source_dir}/tensorflow/cc/framework/cc_op_gen.h"
 )
 resolve_duplicate_filenames(tf_cc_op_gen_main_srcs "${tf_src_regex}")
-add_library(tf_cc_op_gen_main OBJECT ${tf_cc_op_gen_main_srcs}) # alwaysuse as object lib
-#target_link_libraries(tf_cc_op_gen_main PUBLIC tf_core_framework)
-add_dependencies(tf_cc_op_gen_main tf_core_framework) # add manual dependency if using OBJECT lib
+
+set(use_object 1)
+if(${use_object})
+  add_library(tf_cc_op_gen_main OBJECT ${tf_cc_op_gen_main_srcs})
+  add_dependencies(tf_cc_op_gen_main tf_core_framework) # add manual dependency if using OBJECT lib  
+else()
+  add_library(tf_cc_op_gen_main STATIC ${tf_cc_op_gen_main_srcs})
+  target_link_libraries(tf_cc_op_gen_main PUBLIC tf_core_framework)
+endif()
 target_any_link_libraries(tf_cc_op_gen_main PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 ########################################################
@@ -62,56 +68,74 @@ set(tf_cc_ops_generated_files)
 set(tf_cc_op_lib_names
     ${tf_op_lib_names}
     "user_ops"
-)
+    )
+
+file(WRITE tf_null.cc "")
+  
 foreach(tf_cc_op_lib_name ${tf_cc_op_lib_names})
     # Using <TARGET_OBJECTS:...> to work around an issue where no ops were
     # registered (static initializers dropped by the linker because the ops
     # are not used explicitly in the *_gen_cc executables).
 
-    set(tf_libs
+    if(${use_object})
+      add_executable(${tf_cc_op_lib_name}_gen_cc tf_null.cc  $<TARGET_OBJECTS:tf_cc_op_gen_main>)
+      # $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>
+      # $<TARGET_OBJECTS:tf_core_lib>
+      # $<TARGET_OBJECTS:tf_core_framework>
+    else()
+      add_executable(${tf_cc_op_lib_name}_gen_cc tf_null.cc)
+    endif()
+
+    message("ADD ${tf_cc_op_lib_name}_gen_cc w/ ${tf_libs}")
+      
+    set_property(TARGET ${tf_cc_op_lib_name}_gen_cc PROPERTY FOLDER "app/gen")
+
+    set(my_libs
       tf_${tf_cc_op_lib_name}
       tf_core_lib
       tf_core_framework
       )
-    
-    add_executable(${tf_cc_op_lib_name}_gen_cc
-      $<TARGET_OBJECTS:tf_cc_op_gen_main>
-      # $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>
-      # $<TARGET_OBJECTS:tf_core_lib>
-      # $<TARGET_OBJECTS:tf_core_framework>
-      )
-      
-    set_property(TARGET ${tf_cc_op_lib_name}_gen_cc PROPERTY FOLDER "app/gen")
+
+    if(NOT ${use_object})
+      list(APPEND my_libs tf_cc_op_gen_main)
+    endif()
 
     target_link_libraries(${tf_cc_op_lib_name}_gen_cc PUBLIC
         tf_protos_cc
         ${tensorflow_EXTERNAL_PACKAGES}
         ${tensorflow_EXTERNAL_LIBRARIES}
         sqlite3
-        ${tf_libs} # from OBJECT libs
-    )
+        ${my_libs} # from OBJECTS
+        )
 
     set(cc_ops_include_internal 0)
     if(${tf_cc_op_lib_name} STREQUAL "sendrecv_ops")
         set(cc_ops_include_internal 1)
     endif()
 
+    # https://stackoverflow.com/a/32513174
+    # Here we use the OUTPUT signature of add_custom_command
+    # in order to create a dependency on these files
+    # in downstream targets
+    #
+    # Note that this doesn't seem to work:
+    # DEPENDS ${tf_cc_op_lib_name}_gen_cc
+    #
+    # How do we create a dependency between custom command and another target
     add_custom_command(
-    OUTPUT ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h
-           ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc
-           ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.h
-           ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.cc
-    COMMAND ${tf_cc_op_lib_name}_gen_cc ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc ${tensorflow_source_dir}/tensorflow/cc/ops/op_gen_overrides.pbtxt ${cc_ops_include_internal} ${tensorflow_source_dir}/tensorflow/core/api_def/base_api
-    DEPENDS ${tf_cc_op_lib_name}_gen_cc create_cc_ops_header_dir
-
-    COMMAND ${CMAKE_COMMAND} -E echo "${tf_cc_op_lib_name}_gen_cc ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc ${tensorflow_source_dir}/tensorflow/cc/ops/op_gen_overrides.pbtxt ${cc_ops_include_internal} ${tensorflow_source_dir}/tensorflow/core/api_def/base_api"
+      OUTPUT ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h
+        ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc
+        ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.h
+        ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.cc
+      COMMAND ${tf_cc_op_lib_name}_gen_cc ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc ${tensorflow_source_dir}/tensorflow/cc/ops/op_gen_overrides.pbtxt ${cc_ops_include_internal} ${tensorflow_source_dir}/tensorflow/core/api_def/base_api
+      DEPENDS ${tf_cc_op_lib_name}_gen_cc create_cc_ops_header_dir
     )
 
-
-    list(APPEND tf_cc_ops_generated_files ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h)
-    list(APPEND tf_cc_ops_generated_files ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc)
-    list(APPEND tf_cc_ops_generated_files ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.h)
-    list(APPEND tf_cc_ops_generated_files ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.cc)
+  list(APPEND tf_cc_ops_generated_files
+    ${cc_ops_target_dir}/${tf_cc_op_lib_name}.h
+    ${cc_ops_target_dir}/${tf_cc_op_lib_name}.cc
+    ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.h
+    ${cc_ops_target_dir}/${tf_cc_op_lib_name}_internal.cc)
 endforeach()
 
 ########################################################

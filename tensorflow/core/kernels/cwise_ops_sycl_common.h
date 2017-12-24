@@ -20,7 +20,7 @@ limitations under the License.
 #ifndef TENSORFLOW_CORE_KERNELS_CWISE_OPS_SYCL_COMMON_H_
 #define TENSORFLOW_CORE_KERNELS_CWISE_OPS_SYCL_COMMON_H_
 
-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "eigen3/unsupported/Eigen/CXX11/Tensor"
 
 #include "tensorflow/core/framework/register_types.h"
 #include "tensorflow/core/kernels/cwise_ops.h"
