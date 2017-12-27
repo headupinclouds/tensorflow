@@ -56,10 +56,17 @@ foreach(tf_op_lib_name ${tf_op_lib_names})
         "${tensorflow_source_dir}/tensorflow/core/ops/${tf_op_lib_name}.cc"
     )
     resolve_duplicate_filenames(tf_core_kernels_srcs tf_${tf_op_lib_name}_srcs "${tf_src_regex}")
-    add_library(tf_${tf_op_lib_name} ${TF_LIB_TYPE} ${tf_${tf_op_lib_name}_srcs})
-    tf_install_lib(tf_${tf_op_lib_name})
-    target_link_libraries(tf_${tf_op_lib_name} PUBLIC tf_core_framework)
+
+    # Use as static lib:
+    #add_library(tf_${tf_op_lib_name} ${TF_LIB_TYPE} ${tf_${tf_op_lib_name}_srcs})
+    #tf_install_lib(tf_${tf_op_lib_name})
+    #target_link_libraries(tf_${tf_op_lib_name} PUBLIC tf_core_framework)
+
+    # Use as object lib:
+    add_library(tf_${tf_op_lib_name} OBJECT ${tf_${tf_op_lib_name}_srcs}) # use object for *_gen_cc use in tf_cc_ops.cmake
     target_any_link_libraries(tf_${tf_op_lib_name} PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
+    add_dependencies(tf_${tf_op_lib_name} tf_core_framework)
+    
 endforeach()
 
 function(GENERATE_CONTRIB_OP_LIBRARY op_lib_name cc_srcs)
@@ -119,9 +126,14 @@ file(GLOB_RECURSE tf_user_ops_srcs
 )
 
 resolve_duplicate_filenames(tf_user_ops_srcs "${tf_src_regex}")
-add_library(tf_user_ops ${TF_LIB_TYPE} ${tf_user_ops_srcs})
-tf_install_lib(tf_user_ops)
-target_link_libraries(tf_user_ops PUBLIC tf_core_framework)
+
+# add_library(tf_user_ops STATIC ${tf_user_ops_srcs})
+# tf_install_lib(tf_user_ops)
+# target_link_libraries(tf_user_ops PUBLIC tf_core_framework)
+
+add_library(tf_user_ops OBJECT ${tf_user_ops_srcs})
+add_dependencies(tf_user_ops tf_core_framework)
+
 target_any_link_libraries(tf_user_ops PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
 ########################################################

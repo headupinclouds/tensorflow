@@ -236,6 +236,8 @@ find_package(highwayhash CONFIG REQUIRED) # highwayhash::highwayhash)
 hunter_add_package(nsync)
 find_package(nsync CONFIG REQUIRED) # nsync::nsync)
 
+SHOW_VARIABLES()
+
 #########################
 ### include(protobuf) ###
 #########################

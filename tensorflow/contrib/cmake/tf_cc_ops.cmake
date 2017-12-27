@@ -78,8 +78,9 @@ foreach(tf_cc_op_lib_name ${tf_cc_op_lib_names})
     # are not used explicitly in the *_gen_cc executables).
 
     if(${use_object})
-      add_executable(${tf_cc_op_lib_name}_gen_cc tf_null.cc  $<TARGET_OBJECTS:tf_cc_op_gen_main>)
-      # $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>
+      add_executable(${tf_cc_op_lib_name}_gen_cc tf_null.cc
+        $<TARGET_OBJECTS:tf_cc_op_gen_main>
+        $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>)
       # $<TARGET_OBJECTS:tf_core_lib>
       # $<TARGET_OBJECTS:tf_core_framework>
     else()
@@ -91,7 +92,6 @@ foreach(tf_cc_op_lib_name ${tf_cc_op_lib_names})
     set_property(TARGET ${tf_cc_op_lib_name}_gen_cc PROPERTY FOLDER "app/gen")
 
     set(my_libs
-      tf_${tf_cc_op_lib_name}
       tf_core_lib
       tf_core_framework
       )
