@@ -22,7 +22,7 @@ limitations under the License.
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/util/cuda_kernel_helper.h"
 #include "tensorflow/core/util/tensor_format.h"
-#include "external/cub_archive/cub/util_ptx.cuh"
+#include "cub/util_ptx.cuh"
 
 #if !defined(_MSC_VER)
 #define UNROLL _Pragma("unroll")
