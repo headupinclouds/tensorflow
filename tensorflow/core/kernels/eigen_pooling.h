@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef THIRD_PARTY_TENSORFLOW_CORE_KERNELS_EIGEN_POOLING_H_
 #define THIRD_PARTY_TENSORFLOW_CORE_KERNELS_EIGEN_POOLING_H_
 
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/kernels/eigen_volume_patch.h"
 
 namespace Eigen {

@@ -21,7 +21,7 @@ limitations under the License.
 #include <type_traits>
 
 #define EIGEN_USE_GPU
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/kernel_def_builder.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/tensor_shape.h"

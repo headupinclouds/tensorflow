@@ -17,7 +17,7 @@ limitations under the License.
 
 #include <utility>
 
-#include "eigen3/Eigen/Core"
+#include "third_party/eigen3/Eigen/Core"
 #include "tensorflow/core/framework/device_base.h"
 #include "tensorflow/core/framework/kernel_def_builder.h"
 #include "tensorflow/core/framework/op_kernel.h"

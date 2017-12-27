@@ -17,7 +17,7 @@ limitations under the License.
 #define TENSORFLOW_KERNELS_CWISE_OPS_GRADIENTS_H_
 
 #define EIGEN_USE_THREADS
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/kernels/cwise_ops.h"
 
 namespace Eigen {

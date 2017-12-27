@@ -17,8 +17,7 @@ limitations under the License.
 
 #define EIGEN_USE_GPU
 
-//#include "cub/device/device_histogram.cuh"
-#include "cub/device/device_histogram.cuh"
+#include "external/cub_archive/cub/device/device_histogram.cuh"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/register_types.h"
 #include "tensorflow/core/framework/tensor.h"

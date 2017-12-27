@@ -23,8 +23,8 @@ limitations under the License.
 
 #define EIGEN_USE_THREADS
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/Eigen/Core"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 
 #include "tensorflow/core/framework/numeric_op.h"
 #include "tensorflow/core/framework/op_kernel.h"

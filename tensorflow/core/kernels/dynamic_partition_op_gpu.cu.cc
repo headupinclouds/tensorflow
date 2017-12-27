@@ -35,10 +35,10 @@ limitations under the License.
 
 #define EIGEN_USE_GPU
 
-#include "cub/device/device_radix_sort.cuh"
-#include "cub/device/device_reduce.cuh"
-#include "cub/iterator/constant_input_iterator.cuh"
-#include "cub/thread/thread_operators.cuh"
+#include "external/cub_archive/cub/device/device_radix_sort.cuh"
+#include "external/cub_archive/cub/device/device_reduce.cuh"
+#include "external/cub_archive/cub/iterator/constant_input_iterator.cuh"
+#include "external/cub_archive/cub/thread/thread_operators.cuh"
 #include "tensorflow/core/common_runtime/gpu/gpu_event_mgr.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/register_types.h"

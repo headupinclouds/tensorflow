@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef TENSORFLOW_KERNELS_AGGREGATE_OPS_CPU_H_
 #define TENSORFLOW_KERNELS_AGGREGATE_OPS_CPU_H_
 
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/tensor_types.h"
 
 #include "tensorflow/core/kernels/aggregate_ops.h"

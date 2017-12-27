@@ -25,8 +25,8 @@ limitations under the License.
 #include "tensorflow/core/framework/types.h"
 #include "tensorflow/core/kernels/bounds_check.h"
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/Eigen/Core"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 
 #include "tensorflow/core/kernels/scan_ops.h"
 

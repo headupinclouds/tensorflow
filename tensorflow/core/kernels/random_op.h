@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef TENSORFLOW_KERNELS_RANDOM_OP_H_
 #define TENSORFLOW_KERNELS_RANDOM_OP_H_
 
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/lib/random/random_distributions.h"
 
 namespace tensorflow {

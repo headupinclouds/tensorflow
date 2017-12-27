@@ -17,7 +17,7 @@ limitations under the License.
 #define TENSORFLOW_KERNELS_BETAINC_OP_H_
 // Functor definition for BetaincOp, must be compilable by nvcc.
 
-#include "eigen3/unsupported/Eigen/CXX11/Tensor"
+#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
 #include "tensorflow/core/framework/tensor_types.h"
 
 namespace tensorflow {

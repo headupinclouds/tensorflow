@@ -15,8 +15,8 @@ limitations under the License.
 
 // See docs in ../ops/linalg_ops.cc.
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Eigenvalues"
+#include "third_party/eigen3/Eigen/Core"
+#include "third_party/eigen3/Eigen/Eigenvalues"
 #include "tensorflow/core/framework/kernel_def_builder.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/tensor_shape.h"
