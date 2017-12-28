@@ -219,7 +219,11 @@ target_any_link_libraries(tf_core_kernels PUBLIC "${tensorflow_EXTERNAL_PACKAGES
 if (WIN32)
   target_compile_options(tf_core_kernels PUBLIC /MP)
 endif (WIN32)
+
 if (tensorflow_ENABLE_GPU)
+
+  list_sources(tf_core_gpu_kernels_srcs)
+
   set_source_files_properties(${tf_core_gpu_kernels_srcs} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
   set(tf_core_gpu_kernels_lib tf_core_gpu_kernels)
   cuda_add_library(${tf_core_gpu_kernels_lib} ${tf_core_gpu_kernels_srcs})

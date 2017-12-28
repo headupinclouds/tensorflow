@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 include("cmake/HunterGate.cmake")
 HunterGate(
@@ -529,16 +529,19 @@ if (tensorflow_ENABLE_GPU)
 
   # by default we assume compute cabability 3.5 and 5.2. If you change this change it in
   # CUDA_NVCC_FLAGS and cuda_config.h below
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=\"sm_30,compute_30\";-gencode arch=compute_35,code=\"sm_35,compute_35\";-gencode arch=compute_52,code=\"sm_52,compute_52\")
+  #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=\"sm_30,compute_30\";-gencode arch=compute_35,code=\"sm_35,compute_35\";-gencode arch=compute_52,code=\"sm_52,compute_52\")
+  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=\"sm_30,compute_30\")
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--include-path ${PROJECT_BINARY_DIR}/$\{build_configuration\};--expt-relaxed-constexpr)
   set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-ftz=true)  # Flush denormals to zero
   set(CUDA_INCLUDE ${CUDA_TOOLKIT_TARGET_DIR} ${CUDA_TOOLKIT_TARGET_DIR}/extras/CUPTI/include)
   include_directories(${CUDA_INCLUDE})
   if (WIN32)
-    add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2)
+    #add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2)
+    add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0)
   else (WIN32)
     # Without these double quotes, cmake in Linux makes it "-DTF_EXTRA_CUDA_CAPABILITIES=3.0, -D3.5, -D5.2" for cc, which incurs build breaks
-    add_definitions(-DGOOGLE_CUDA=1 -D"TF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2")
+    #add_definitions(-DGOOGLE_CUDA=1 -D"TF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2")
+    add_definitions(-DGOOGLE_CUDA=1 -D"TF_EXTRA_CUDA_CAPABILITIES=3.0")
   endif (WIN32)
 
   if (WIN32)
@@ -599,15 +602,26 @@ if (tensorflow_ENABLE_GPU)
   string(REPLACE "." "" short_CUDA_VER ${tensorflow_CUDA_VERSION})
 
   # create cuda_config.h
-  FILE(WRITE ${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h
+  set(cuda_config_h_tmp "${CMAKE_CURRENT_BINARY_DIR}/cuda_config.h")
+  set(cuda_config_h "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h")
+  FILE(WRITE "${cuda_config_h_tmp}"
     "#ifndef CUDA_CUDA_CONFIG_H_\n"
     "#define CUDA_CUDA_CONFIG_H_\n"
-    "#define TF_CUDA_CAPABILITIES CudaVersion(\"3.0\"),CudaVersion(\"3.5\"),CudaVersion(\"5.2\")\n"
+    #"#define TF_CUDA_CAPABILITIES CudaVersion(\"3.0\"),CudaVersion(\"3.5\"),CudaVersion(\"5.2\")\n"
+    "#define TF_CUDA_CAPABILITIES CudaVersion(\"3.0\")\n"
     "#define TF_CUDA_VERSION \"64_${short_CUDA_VER}\"\n"
     "#define TF_CUDNN_VERSION \"64_${tensorflow_CUDNN_VERSION}\"\n"
     "#define TF_CUDA_TOOLKIT_PATH \"${CUDA_TOOLKIT_ROOT_DIR}\"\n"
     "#endif  // CUDA_CUDA_CONFIG_H_\n"
   )
+
+  # NOTE: we could use add_custom_target and add the target as a dependency to the gpu libs
+  # >>> https://stackoverflow.com/a/15973676
+  add_custom_command(
+    OUTPUT "${cuda_config_h}"
+    DEPENDS "${cuda_config_h_tmp}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${cuda_config_h_tmp}" "${cuda_config_h}"
+  ) 
 
   if (WIN32)
     # tf assumes in various places header files to be in cuda/include. On windows the cuda sdk
@@ -626,14 +640,26 @@ if (tensorflow_ENABLE_GPU)
 
     message("CUDA_TOOLKIT_TARGET_DIR: ${CUDA_TOOLKIT_TARGET_DIR}")
     message("CUDNN_INCLUDE: ${CUDNN_INCLUDE}")
-    FILE(COPY
-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cublas_v2.h ${CUDNN_INCLUDE}/cudnn.h
-      ${CUDA_TOOLKIT_TARGET_DIR}/include/cufft.h ${CUDA_TOOLKIT_TARGET_DIR}/include/curand.h
+
+    set(cuda_header_files
+      ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h 
+      ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
+      ${CUDA_TOOLKIT_TARGET_DIR}/include/cublas_v2.h 
+      ${CUDNN_INCLUDE}/cudnn.h
+      ${CUDA_TOOLKIT_TARGET_DIR}/include/cufft.h 
+      ${CUDA_TOOLKIT_TARGET_DIR}/include/curand.h
       ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda_runtime_api.h
       ${CUDA_TOOLKIT_TARGET_DIR}/include/cusolverDn.h
-      DESTINATION ${tensorflow_source_dir}/third_party/gpus/cuda/include
-    )
+      )
+
+    set(cuda_include_install "${tensorflow_source_dir}/third_party/gpus/cuda/include/")
+    
+    #  FILE(COPY "${cuda_header_files}" DESTINATION ${cuda_include_install})
+    add_custom_target(
+      tf_cuda_headers
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${cuda_header_files}" "${cuda_include_install}"
+      )
+
   endif(WIN32)
 
   include_directories(${tensorflow_source_dir}/third_party/gpus)
@@ -662,7 +688,7 @@ endif(tensorflow_ENABLE_GPU)
 
 # Find python executable
 include(FindPythonInterp)
-if(NOT ${PYTHONINTERP_FOUND})
+if(NOT ${PYTepHONINTERP_FOUND})
     message(FATAL_ERROR "CMake was unable to find a python interpreter.")
 endif()
 
@@ -677,6 +703,12 @@ include(tf_core_cpu.cmake)
 include(tf_core_ops.cmake)
 include(tf_core_direct_session.cmake)
 include(tf_core_kernels.cmake)
+
+# make sure cuda headers are installed
+if(tensorflow_ENABLE_GPU AND tf_core_gpu_kernels_lib)
+  add_dependencies(${tf_core_gpu_kernels_lib} tf_cuda_headers)
+endif()
+
 if(tensorflow_ENABLE_GRPC_SUPPORT)
   include(tf_core_distributed_runtime.cmake)
 endif()
