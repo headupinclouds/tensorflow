@@ -657,7 +657,7 @@ if (tensorflow_ENABLE_GPU)
     #  FILE(COPY "${cuda_header_files}" DESTINATION ${cuda_include_install})
     add_custom_target(
       tf_cuda_headers
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${cuda_header_files}" "${cuda_include_install}"
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cuda_header_files} "${cuda_include_install}"
       )
 
   endif(WIN32)
