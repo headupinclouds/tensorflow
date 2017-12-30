@@ -156,7 +156,7 @@ file(GLOB_RECURSE tf_core_kernels_exclude_srcs
     
 list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_exclude_srcs})
 
-list_sources(tf_core_kernels_exclude_srcs)
+#list_sources(tf_core_kernels_exclude_srcs)
 list_sources(tf_core_kernels_srcs) 
 
 if(WIN32)
@@ -224,9 +224,22 @@ if (tensorflow_ENABLE_GPU)
 
   list_sources(tf_core_gpu_kernels_srcs)
 
-  set_source_files_properties(${tf_core_gpu_kernels_srcs} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
+  # Xcode requires *.cu extensions:
+  set(tf_core_gpu_kernels_srcs_cu "")
+  foreach(file ${tf_core_gpu_kernels_srcs})
+    file(RELATIVE_PATH file_relative "${CMAKE_SOURCE_DIR}" ${file})
+    get_filename_component(file_dir ${file_relative} DIRECTORY)
+    get_filename_component(file_ext ${file_relative} EXT)
+    get_filename_component(file_name ${file_relative} NAME_WE)
+    set(mirror "${CMAKE_BINARY_DIR}/${file_dir}/${file_name}.cu")
+    configure_file(${file} ${mirror} COPYONLY)
+    message("mirror: ${mirror}")
+    list(APPEND tf_core_gpu_kernels_srcs_cu ${mirror})    
+  endforeach()
+
+  set_source_files_properties(${tf_core_gpu_kernels_srcs_cu} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
   set(tf_core_gpu_kernels_lib tf_core_gpu_kernels)
-  cuda_add_library(${tf_core_gpu_kernels_lib} ${tf_core_gpu_kernels_srcs})
+  cuda_add_library(${tf_core_gpu_kernels_lib} ${tf_core_gpu_kernels_srcs_cu})
   tf_install_lib(${tf_core_gpu_kernels_lib})
   set_target_properties(${tf_core_gpu_kernels_lib}
                         PROPERTIES DEBUG_POSTFIX ""
