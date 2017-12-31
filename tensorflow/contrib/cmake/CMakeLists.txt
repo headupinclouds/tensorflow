@@ -625,6 +625,9 @@ if (tensorflow_ENABLE_GPU)
   set(cuda_config_h_in "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h.in")
   configure_file("${cuda_config_h_in}" "${cuda_config_h}" @ONLY)
 
+  # tf assumes in various places header files to be in cuda/include. On windows the cuda sdk
+  # installs them under cuda/version/include and to avoid that we need to change tf we copy a
+  # few files to cuda/include    
   set(cuda_header_files
     ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda.h
     ${CUDA_TOOLKIT_TARGET_DIR}/include/cuComplex.h
@@ -634,24 +637,19 @@ if (tensorflow_ENABLE_GPU)
     ${CUDA_TOOLKIT_TARGET_DIR}/include/cuda_runtime_api.h
     ${CUDA_TOOLKIT_TARGET_DIR}/include/cusolverDn.h
     )
-
-  # tf assumes in various places header files to be in cuda/include. On windows the cuda sdk
-  # installs them under cuda/version/include and to avoid that we need to change tf we copy a
-  # few files to cuda/include  
   if (WIN32)
     list(APPEND cuda_header_files ${CUDNN_HOME}/include/cudnn.h)
   else(WIN32)
     list(APPEND cuda_header_files ${CUDNN_INCLUDE}/cudnn.h)
   endif(WIN32)
-  
-  # was FILE(COPY "${cuda_header_files}" DESTINATION ${cuda_include_install})
-  set(cuda_include_install "${tensorflow_source_dir}/third_party/gpus/cuda/include/")  
+  set(cuda_include_install "${tensorflow_source_dir}/third_party/gpus/cuda/include/")
   add_custom_target(
     tf_cuda_headers
     COMMAND ${CMAKE_COMMAND} -E make_directory "${cuda_include_install}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${cuda_header_files} "${cuda_include_install}"
     )  
 
+  # TODO: replace global
   include_directories(${tensorflow_source_dir}/third_party/gpus)
   # add cuda libraries to tensorflow_EXTERNAL_LIBRARIES
   list(APPEND tensorflow_EXTERNAL_LIBRARIES ${CUDA_LIBRARIES})
