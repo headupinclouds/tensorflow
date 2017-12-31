@@ -421,21 +421,6 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/quantized_matmul_op_for_hexagon_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/hexagon_rewriter_transform_test.cc" 
     "${tensorflow_source_dir}/tensorflow/core/kernels/spectrogram_op_test.cc" # missing header file
-
-    # arra_ops.h is missing, so exclude any tests that uses that
-    "${tensorflow_source_dir}/tensorflow/core/framework/variant_op_copy_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/graph/graph_partition_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/dequantize_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/quantize_and_dequantize_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_add_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_instance_norm_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_mul_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_resize_bilinear_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_execute_op_test_utils.cc" #include "tensorflow/cc/ops/array_ops.h"
-
-    "${tensorflow_source_dir}/tensorflow/core/kernels/shape_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/flatten_atrous_test.cc" #include "tensorflow/cc/ops/array_ops.h"
-    
     "${tensorflow_source_dir}/tensorflow/core/platform/s3/s3_file_system_test.cc" # tensorflow::S3FileSystem
     )
   
@@ -447,7 +432,6 @@ if (tensorflow_BUILD_CC_TESTS)
     list(APPEND tf_test_src_simple_exclude "${tensorflow_source_dir}/tensorflow/core/kernels/xsmm_conv2d_test.cc")
   endif()
 
-  #DJH: if (NOT tensorflow_SOMETHING)
   list(APPEND tf_test_src_simple_exclude
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/graph_transferer_test.cc"
     "${tensorflow_source_dir}/tensorflow/core/kernels/hexagon/hexagon_graph_execution_test.cc"
