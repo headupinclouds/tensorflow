@@ -16,6 +16,11 @@ get_filename_component(tf_contrib_source_dir ${tensorflow_SOURCE_DIR} PATH)
 get_filename_component(tf_tf_source_dir ${tf_contrib_source_dir} PATH)
 get_filename_component(tensorflow_source_dir ${tf_tf_source_dir} PATH)
 
+message("TF: tensorflow_SOURCE_DIR ${tensorflow_SOURCE_DIR}")
+message("TF: tf_contrib_source_dir ${tf_contrib_source_dir}")  
+message("TF: tf_tf_source_dir ${tf_tf_source_dir}")
+message("TF: tensorflow_source_dir ${tensorflow_source_dir}")
+
 # [CLEANUP] Not sure if this is needed (copied from Protobuf)
 # CMake policies
 cmake_policy(SET CMP0022 NEW)
