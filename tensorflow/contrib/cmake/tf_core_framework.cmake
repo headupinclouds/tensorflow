@@ -305,8 +305,11 @@ add_library(tf_core_lib ${TF_LIB_TYPE} ${tf_core_lib_srcs})
 tf_install_lib(tf_core_lib)
 #target_link_libraries(tf_core_lib ${tensorflow_EXTERNAL_DEPENDENCIES} tf_protos_cc)
 target_link_libraries(tf_core_lib PUBLIC tf_protos_cc)
-
 target_any_link_libraries(tf_core_lib PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
+
+if(tensorflow_ENABLE_GPU))
+  add_dependencies(tf_core_lib "${cuda_config_h}")
+endif()
 
 # Tricky setup to force always rebuilding
 # force_rebuild always runs forcing ${VERSION_INFO_CC} target to run
