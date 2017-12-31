@@ -612,6 +612,10 @@ if (tensorflow_ENABLE_GPU)
   # create cuda_config.h
   set(cuda_config_h_tmp "${CMAKE_CURRENT_BINARY_DIR}/cuda_config.h")
   set(cuda_config_h "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h")
+
+  message("TF: ${cuda_config_h_tmp}")
+  message("TF: ${cuda_config_h}")
+  
   FILE(WRITE "${cuda_config_h_tmp}"
     "#ifndef CUDA_CUDA_CONFIG_H_\n"
     "#define CUDA_CUDA_CONFIG_H_\n"
