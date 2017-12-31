@@ -12,6 +12,11 @@ get_filename_component(tf_contrib_source_dir ${tensorflow_SOURCE_DIR} PATH)
 get_filename_component(tf_tf_source_dir ${tf_contrib_source_dir} PATH)
 get_filename_component(tensorflow_source_dir ${tf_tf_source_dir} PATH)
 
+message("TF: tensorflow_SOURCE_DIR ${tensorflow_SOURCE_DIR}")
+message("TF: tf_contrib_source_dir ${tf_contrib_source_dir}")  
+message("TF: tf_tf_source_dir ${tf_tf_source_dir}")
+message("TF: tensorflow_source_dir ${tensorflow_source_dir}")
+
 # [CLEANUP] Not sure if this is needed (copied from Protobuf)
 # CMake policies
 cmake_policy(SET CMP0022 NEW)
@@ -254,6 +259,23 @@ if(HAIKU)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES network)
 endif()
 
+<<<<<<< Updated upstream
+=======
+# Platform checks
+string(COMPARE EQUAL "${CMAKE_SYSTEM_NAME}" "Darwin" is_osx)
+
+if(is_osx)
+  set(XCODE_TAG "_osx")
+  set(use_nccl FALSE)
+else()
+  set(XCODE_TAG "")  
+  set(use_nccl TRUE)
+endif()
+
+option(tensorflow_USE_NCCL "Use NCCL lib" ${use_ncc})
+
+message("TF tensorflow_ENABLE_GPU ${tensorflow_ENABLE_GPU}")
+>>>>>>> Stashed changes
 if (tensorflow_ENABLE_GPU)
   if (NOT WIN32)
     # Default install paths for cuda libraries in Linux
