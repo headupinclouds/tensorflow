@@ -56,6 +56,10 @@ if(WIN32)
   # that can be exported, we filter the symbols with a python script to the namespaces
   # we need.
   #
+
+  # TODO: create empty *.cc files for the lib
+  # and use copy_if_different to avoid rebuilds
+  
   add_library(tensorflow_static STATIC
       # $<TARGET_OBJECTS:tf_c>
       # $<TARGET_OBJECTS:tf_cc>
@@ -96,7 +100,7 @@ endif(WIN32)
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
-add_library(tensorflow SHARED
+add_library(${PROJECT_NAME} SHARED
     # $<TARGET_OBJECTS:tf_c>
     # $<TARGET_OBJECTS:tf_cc>
     # $<TARGET_OBJECTS:tf_cc_framework>
@@ -138,7 +142,100 @@ target_include_directories(tensorflow PUBLIC
     $<INSTALL_INTERFACE:include/>
     $<INSTALL_INTERFACE:include/external/nsync/public>)
 
-install(TARGETS tensorflow EXPORT tensorflow_export
+  # INSTALL
+
+#######################
+
+# https://github.com/forexample/package-example/blob/master/Foo/CMakeLists.txt
+
+
+# Generate:
+#   * ${CMAKE_CURRENT_BINARY_DIR}/generated_headers/${PROJECT_NAME}/${PROJECT_NAME}_EXPORT.h
+# Renaming because:
+# * We need prefix '${PROJECT_NAME}' to fit OSX/iOS frameworks layout
+# * File name matches name of the macro
+set(generated_headers "${CMAKE_CURRENT_BINARY_DIR}/generated_headers")
+set(tf_export "${generated_headers}/${PROJECT_NAME}/${PROJECT_NAME}_EXPORT.h")
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME ${tf_export})
+
+# Layout. This works for all platforms:
+#   * <prefix>/lib/cmake/<PROJECT-NAME>
+#   * <prefix>/lib/
+#   * <prefix>/include/
+set(config_install_dir "lib/cmake/${PROJECT_NAME}")
+set(include_install_dir "include")
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Configuration
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+# Include module with fuction 'write_basic_package_version_file'
+include(CMakePackageConfigHelpers)
+
+# Configure '<PROJECT-NAME>ConfigVersion.cmake'
+# Use:
+#   * PROJECT_VERSION
+write_basic_package_version_file(
+    "${version_config}" COMPATIBILITY SameMajorVersion
+)
+
+# Configure '<PROJECT-NAME>Config.cmake'
+# Use variables:
+#   * TARGETS_EXPORT_NAME
+#   * PROJECT_NAME
+configure_package_config_file(
+    "cmake/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${config_install_dir}"
+)
+
+# Targets:
+#   * <prefix>/lib/libtensorflow.a
+#   * header location after install: <prefix>/include/${PROJECT_NAME}/xyz/abc.hpp
+#   * headers can be included by C++ code `#include <tensorflow/xyz/abc.hpp>`
+install(
+    TARGETS "${PROJECT_NAME}"
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+    INCLUDES DESTINATION "${include_install_dir}"
+)
+
+# Export headers:
+#     ${CMAKE_CURRENT_BINARY_DIR}/.../${PROJECT_NAME}_EXPORT.h ->
+#    <prefix>/include/${PROJECT_NAME}/${PROJECT_NAME}_EXPORT.h
+install(
+    FILES "${tf_export}"
+    DESTINATION "${include_install_dir}/${PROJECT_NAME}"
+)
+
+# Config
+#   * <prefix>/lib/cmake/${PROJECT_NAME}/${PROJECT_NAME}Config.cmake
+#   * <prefix>/lib/cmake/${PROJECT_NAME}/${PROJECT_NAME}ConfigVersion.cmake
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${config_install_dir}"
+)
+
+# Config
+#   * <prefix>/lib/cmake/${PROJECT_NAME}/${PROJECT_NAME}Targets.cmake
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}"
+)
+# }
+
+#######################
+
+install(TARGETS tensorflow
+        EXPORT tensorflow_export
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
@@ -149,21 +246,25 @@ install(EXPORT tensorflow_export
 
 # install necessary headers
 # tensorflow headers
-install(DIRECTORY ${tensorflow_source_dir}/tensorflow/cc/
-        DESTINATION include/tensorflow/cc
-        FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/cc/
-        DESTINATION include/tensorflow/cc
-        FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${tensorflow_source_dir}/tensorflow/core/
-        DESTINATION include/tensorflow/core
-        FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/core/
-        DESTINATION include/tensorflow/core
-        FILES_MATCHING PATTERN "*.h")
+set(tf_modules cc core)
+foreach(module ${tf_modules})
+  install(DIRECTORY ${tensorflow_source_dir}/tensorflow/${module}/
+         DESTINATION include/tensorflow/${module}
+         FILES_MATCHING PATTERN "*.h")
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/${module}/
+          DESTINATION include/tensorflow/${module}
+          FILES_MATCHING PATTERN "*.h")
+endforeach()
 install(DIRECTORY ${tensorflow_source_dir}/tensorflow/stream_executor/
         DESTINATION include/tensorflow/stream_executor
         FILES_MATCHING PATTERN "*.h")
+
+
+if(tensorflow_ENABLE_FIND_PACKAGE)
+  # We are using find_package()
+  return()
+endif()
+      
 # google protobuf headers
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/protobuf/src/protobuf/src/google/
         DESTINATION include/google

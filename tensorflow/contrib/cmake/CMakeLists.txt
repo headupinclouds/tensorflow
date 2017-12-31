@@ -45,6 +45,7 @@ option(tensorflow_OPTIMIZE_FOR_NATIVE_ARCH "Enable compiler optimizations for th
 option(tensorflow_WIN_CPU_SIMD_OPTIONS "Enables CPU SIMD instructions")
 option(tensorflow_ENABLE_SNAPPY_SUPPORT "Enable SNAPPY compression support" ON)
 option(tensorflow_DISABLE_EIGEN_FORCEINLINE "Disable forceinline, to speed up build on windows." OFF)
+option(tensorflow_ENABLE_FIND_PACKAGE "Use find_package()" ON)
 
 # GPU, CUDA and cuDNN options
 option(tensorflow_ENABLE_GPU "Enable GPU support" OFF)
@@ -188,6 +189,10 @@ endif()
 
 # External dependencies
 
+if(NOT tensorflow_ENABLE_FIND_PACKAGE)
+  message(FATAL_ERROR "Must default to tensorflow external package add")
+endif()
+
 # include(zlib)
 hunter_add_package(ZLIB)
 find_package(ZLIB CONFIG REQUIRED) # ZLIB::zlib
@@ -271,13 +276,14 @@ hunter_add_package(re2)
 find_package(RE2 CONFIG REQUIRED) # RE2::re2
 
 # include(cub)
-# >> Notes: optinal for mobile platforms:
-hunter_add_package(cub)
-find_package(cub CONFIG REQUIRED)
+if(tensorflow_ENABLE_GPU)
+  hunter_add_package(cub)
+  find_package(cub CONFIG REQUIRED) # cub::cub
+endif()
 
 # include(sqlite)
 hunter_add_package(SQLite3)
-find_package(SQLite3 REQUIRED) # TODO
+find_package(SQLite3 REQUIRED) # sqlite3
 
 if (tensorflow_BUILD_CC_TESTS)
   #  include(googletest)
@@ -317,14 +323,19 @@ set(tensorflow_EXTERNAL_PACKAGES
   protobuf::libprotobuf       # required?
   protobuf::libprotobuf-lite  # required?
   protobuf::libprotoc         # required?
-  RE2::re2     
-  cub::cub                    # if(TENSORFLOW_USE_CUDA)
+  RE2::re2
   )
+
+if(tensorflow_ENABLE_GPU)
+  list(APPEND tensorflow_EXTERNAL_PACKAGES cub::cub)
+endif()
 
 set(tensorflow_EXTERNAL_LIBRARIES
   sqlite3
   )
 
+# Note: For *_copy_headers_to_destination we 
+#
 # set(tensorflow_EXTERNAL_DEPENDENCIES
 #     zlib_copy_headers_to_destination
 #     gif_copy_headers_to_destination
@@ -502,7 +513,6 @@ endif()
 if(HAIKU)
   list(APPEND tensorflow_EXTERNAL_LIBRARIES network)
 endif()
-
 
 # Platform checks
 string(COMPARE EQUAL "${CMAKE_SYSTEM_NAME}" "Darwin" is_osx)
