@@ -70,15 +70,22 @@ set(tf_cc_op_lib_names
     "user_ops"
     )
 
-file(WRITE tf_null.cc "")
-  
+set(tf_null_tmp ${CMAKE_CURRENT_BINARY_DIR}/tf_null.cc)
+set(tf_null ${CMAKE_CURRENT_LIST_DIR}/tf_null.cc)
+file(WRITE ${tf_null_tmp} "")
+add_custom_command(
+  OUTPUT "${tf_null}"
+  DEPENDS "${tf_null_tmp}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tf_null_tmp}" "${tf_null}"
+  ) 
+
 foreach(tf_cc_op_lib_name ${tf_cc_op_lib_names})
     # Using <TARGET_OBJECTS:...> to work around an issue where no ops were
     # registered (static initializers dropped by the linker because the ops
     # are not used explicitly in the *_gen_cc executables).
 
     if(${use_object})
-      add_executable(${tf_cc_op_lib_name}_gen_cc tf_null.cc
+      add_executable(${tf_cc_op_lib_name}_gen_cc ${tf_null}
         $<TARGET_OBJECTS:tf_cc_op_gen_main>
         $<TARGET_OBJECTS:tf_${tf_cc_op_lib_name}>)
       # $<TARGET_OBJECTS:tf_core_lib>

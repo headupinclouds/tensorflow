@@ -323,7 +323,6 @@ add_custom_command(OUTPUT
     COMMAND ${PYTHON_EXECUTABLE} ${gen_git_source} --raw_generate ${version_info_cc_tmp}
     DEPENDS __force_rebuild)
 
-
 set(VERSION_INFO_CC ${tensorflow_source_dir}/tensorflow/core/util/version_info.cc)
 add_custom_command(OUTPUT
   "${VERSION_INFO_CC}"

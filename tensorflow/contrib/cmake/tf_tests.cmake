@@ -369,7 +369,10 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/c/c_api.cc"
     "${tensorflow_source_dir}/tensorflow/c/checkpoint_reader.cc"
     "${tensorflow_source_dir}/tensorflow/c/tf_status_helper.cc"
+    "${tensorflow_source_dir}/tensorflow/cc/framework/cc_op_gen.cc"
 
+    "${tensorflow_source_dir}/tensorflow/core/grappler/inputs/trivial_test_graph_input_yielder.cc" # grappler::TrivialTestGraphInputYielder::NextItem
+    "${tensorflow_source_dir}/tensorflow/core/kernels/ops_testutil.cc" # :Tensor* OpsTestBase::GetOutput(int output_index)
     "${tensorflow_source_dir}/tensorflow/core/common_runtime/function_testlib.cc" # tensorflow::test::function::Call(tensorflow::Scope*
     "${tensorflow_source_dir}/tensorflow/core/kernels/spectrogram_test_utils.cc"  # tensorflow::ReadWaveFileToVector
     "${tensorflow_source_dir}/tensorflow/core/example/feature_util.cc" # "bool tensorflow::HasFeature<>(std::__1::basic_string<ch
@@ -378,7 +381,8 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/cluster_function_library_runtime_test.cc" # tensorflow::test::TestCluster::MakeTestCluster
     "${tensorflow_source_dir}/tensorflow/core/example/example_parser_configuration.cc" #  "tensorflow::ExtractExampleParserConfiguration(tensorflow::GraphDef
 
-#    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_testlib.cc" # Status TestCluster::MakeTestCluster  int remote_device_test.cc.
+    "${tensorflow_source_dir}/tensorflow/core/distributed_runtime/rpc/grpc_testlib.cc" # Status TestCluster::MakeTestCluster  int remote_device_test.cc.
+    "${tensorflow_source_dir}/tensorflow/core/platform/cloud/gcs_dns_cache.cc" # void GcsDnsCache::AnnotateRequest(HttpRequest* request) 
   )
 
   if(WIN32)
@@ -428,8 +432,11 @@ if (tensorflow_BUILD_CC_TESTS)
     "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_mul_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
     "${tensorflow_source_dir}/tensorflow/core/kernels/quantized_resize_bilinear_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
     "${tensorflow_source_dir}/tensorflow/core/kernels/remote_fused_graph_execute_op_test_utils.cc" #include "tensorflow/cc/ops/array_ops.h"
+
     "${tensorflow_source_dir}/tensorflow/core/kernels/shape_op_test.cc" #include "tensorflow/cc/ops/array_ops.h"
     "${tensorflow_source_dir}/tensorflow/tools/graph_transforms/flatten_atrous_test.cc" #include "tensorflow/cc/ops/array_ops.h"
+    
+    "${tensorflow_source_dir}/tensorflow/core/platform/s3/s3_file_system_test.cc" # tensorflow::S3FileSystem
     )
   
   if (NOT tensorflow_ENABLE_HDFS_SUPPORT)

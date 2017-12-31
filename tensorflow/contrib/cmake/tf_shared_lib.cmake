@@ -29,15 +29,20 @@ set(tf_libs
   tf_core_kernels
   )
 
-if(tensorflow_ENABLE_GRPC_SUPPORT)
+if(TARGET tf_core_distributed_runtime)
   list(APPEND tf_libs tf_core_distributed_runtime)
 endif()
 
 if(tensorflow_ENABLE_GPU)
-  list(APPEND tf_libs tf_core_kernels_cpu_only)
-  if(${BOOL_WIN32})
+
+  if(TARGET tf_core_kernels_cpu_only)
+    list(APPEND tf_libs tf_core_kernels_cpu_only)
+  endif()
+
+  if(TARGET tf_stream_executor)
     list(APPEND tf_stream_executor)
   endif()
+  
 endif()
 
 
