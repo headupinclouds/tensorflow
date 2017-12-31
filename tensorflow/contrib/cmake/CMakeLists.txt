@@ -639,9 +639,9 @@ if (tensorflow_ENABLE_GPU)
   # installs them under cuda/version/include and to avoid that we need to change tf we copy a
   # few files to cuda/include  
   if (WIN32)
-    list(APPEND cuda_headers_files ${CUDNN_HOME}/include/cudnn.h)
+    list(APPEND cuda_header_files ${CUDNN_HOME}/include/cudnn.h)
   else(WIN32)
-    list(APPEND cuda_headers_files ${CUDNN_INCLUDE}/cudnn.h)
+    list(APPEND cuda_header_files ${CUDNN_INCLUDE}/cudnn.h)
   endif(WIN32)
   
   # was FILE(COPY "${cuda_header_files}" DESTINATION ${cuda_include_install})
