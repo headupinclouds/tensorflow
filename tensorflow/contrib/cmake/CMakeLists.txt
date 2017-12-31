@@ -610,31 +610,20 @@ if (tensorflow_ENABLE_GPU)
   string(REPLACE "." "" short_CUDA_VER ${tensorflow_CUDA_VERSION})
 
   # create cuda_config.h
-  set(cuda_config_h_tmp "${CMAKE_CURRENT_BINARY_DIR}/cuda_config.h")
+
+  # Generate file:
+  #   @cuda_compute_capabilities@
+  #   @cuda_version@
+  #   @cudnn_version@
+  #   @cuda_toolkit_path@
+  set(cuda_compute_capabilities "CudaVersion(\"3.0\")")
+  set(cuda_version "64_${short_CUDA_VER}")
+  set(cudnn_version "64_${tensorflow_CUDNN_VERSION}")
+  set(cuda_toolkit_path "${CUDA_TOOLKIT_ROOT_DIR}")
+
   set(cuda_config_h "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h")
-
-  message("TF: ${cuda_config_h_tmp}")
-  message("TF: ${cuda_config_h}")
-  
-  FILE(WRITE "${cuda_config_h_tmp}"
-    "#ifndef CUDA_CUDA_CONFIG_H_\n"
-    "#define CUDA_CUDA_CONFIG_H_\n"
-    #"#define TF_CUDA_CAPABILITIES CudaVersion(\"3.0\"),CudaVersion(\"3.5\"),CudaVersion(\"5.2\")\n"
-    "#define TF_CUDA_CAPABILITIES CudaVersion(\"3.0\")\n"
-    "#define TF_CUDA_VERSION \"64_${short_CUDA_VER}\"\n"
-    "#define TF_CUDNN_VERSION \"64_${tensorflow_CUDNN_VERSION}\"\n"
-    "#define TF_CUDA_TOOLKIT_PATH \"${CUDA_TOOLKIT_ROOT_DIR}\"\n"
-    "#endif  // CUDA_CUDA_CONFIG_H_\n"
-  )
-
-  # NOTE: we could use add_custom_target and add the target as a dependency to the gpu libs
-  # >>> https://stackoverflow.com/a/15973676
-  add_custom_command(OUTPUT __force_rebuild_cuda_config COMMAND ${CMAKE_COMMAND} -E echo)  
-  add_custom_command(
-    OUTPUT "${cuda_config_h}"
-    DEPENDS "${cuda_config_h_tmp}" __force_rebuild_cuda_config
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${cuda_config_h_tmp}" "${cuda_config_h}"
-  ) 
+  set(cuda_config_h_in "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h.in")
+  configure_file("${cuda_config_h_in}" "${cuda_config_h}" @ONLY)
 
   if (WIN32)
     # tf assumes in various places header files to be in cuda/include. On windows the cuda sdk
