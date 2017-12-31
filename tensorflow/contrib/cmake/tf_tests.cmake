@@ -599,7 +599,7 @@ list_sources(tf_test_src_simple_exclude)
   set(tf_test_lib tf_test_lib)
   add_library(${tf_test_lib} STATIC ${tf_src_testlib})
   tf_install_lib(${tf_test_lib})
-  target_link_libraries(${tf_test_lib} PUBLIC ${tensorflow_EXTERNAL_PACKAGES} ${tensorflow_EXTERNAL_LIBRARIES})
+  target_link_libraries(${tf_test_lib} PUBLIC ${tensorflow_EXTERNAL_PACKAGES} ${tensorflow_EXTERNAL_LIBRARIES} tf_cc_ops)
   set_property(TARGET ${tf_test_lib} PROPERTY FOLDER "lib") 
   target_include_directories(${tf_test_lib} PUBLIC "${EIGEN_ROOT}/Eigen")
 

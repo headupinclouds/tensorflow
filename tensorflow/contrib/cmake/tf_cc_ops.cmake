@@ -28,8 +28,6 @@ tf_install_lib(tf_cc_framework)
 target_link_libraries(tf_cc_framework PUBLIC tf_core_framework)
 target_any_link_libraries(tf_cc_framework PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
-# EIGEN_ROOT=/Users/dhirvonen/.hunter/_Base/109b2ab/93591a7/3d0e0eb/Install
-
 ########################################################
 # tf_cc_op_gen_main library
 ########################################################
