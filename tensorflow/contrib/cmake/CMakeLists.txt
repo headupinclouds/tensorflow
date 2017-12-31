@@ -629,9 +629,10 @@ if (tensorflow_ENABLE_GPU)
 
   # NOTE: we could use add_custom_target and add the target as a dependency to the gpu libs
   # >>> https://stackoverflow.com/a/15973676
+  add_custom_command(OUTPUT __force_rebuild_cuda_config COMMAND ${CMAKE_COMMAND} -E echo)  
   add_custom_command(
     OUTPUT "${cuda_config_h}"
-    DEPENDS "${cuda_config_h_tmp}"
+    DEPENDS "${cuda_config_h_tmp}" __force_rebuild_cuda_config
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${cuda_config_h_tmp}" "${cuda_config_h}"
   ) 
 
