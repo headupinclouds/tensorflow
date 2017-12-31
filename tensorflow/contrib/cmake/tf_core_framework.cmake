@@ -307,7 +307,7 @@ tf_install_lib(tf_core_lib)
 target_link_libraries(tf_core_lib PUBLIC tf_protos_cc)
 target_any_link_libraries(tf_core_lib PUBLIC "${tensorflow_EXTERNAL_PACKAGES}")
 
-if(tensorflow_ENABLE_GPU))
+if(tensorflow_ENABLE_GPU)
   add_dependencies(tf_core_lib "${cuda_config_h}")
 endif()
 
