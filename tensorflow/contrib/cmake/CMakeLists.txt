@@ -1,13 +1,6 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.10)
 
-include("cmake/HunterGate.cmake")
-HunterGate(
-  URL "https://github.com/ruslo/hunter/archive/v0.19.210.tar.gz"
-  SHA1 "87eb902de6ca89e1dafc71e475344f523ef67729"
-  LOCAL # cmake/config.cmake
-)
-
 # Project
 project(tensorflow VERSION 1.4 LANGUAGES C CXX)
 
