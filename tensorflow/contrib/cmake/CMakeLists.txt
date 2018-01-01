@@ -49,7 +49,7 @@ option(tensorflow_BUILD_CONTRIB_KERNELS "Build OpKernels from tensorflow/contrib
 option(tensorflow_BUILD_CC_TESTS "Build cc unit tests " OFF)
 option(tensorflow_BUILD_PYTHON_TESTS "Build python unit tests " OFF)
 option(tensorflow_BUILD_MORE_PYTHON_TESTS "Build more python unit tests for contrib packages" OFF)
-option(tensorflow_BUILD_SHARED_LIB "Build TensorFlow as a shared library" ON)
+option(tensorflow_BUILD_SHARED_LIB "Build TensorFlow as a shared library" OFF) # else static
 option(tensorflow_OPTIMIZE_FOR_NATIVE_ARCH "Enable compiler optimizations for the native processor architecture (if available)" ON)
 option(tensorflow_WIN_CPU_SIMD_OPTIONS "Enables CPU SIMD instructions" ON)
 option(tensorflow_ENABLE_SNAPPY_SUPPORT "Enable SNAPPY compression support" ON)
