@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
 set(tf_libs
   tf_c
   tf_cc
@@ -46,7 +45,7 @@ if(tensorflow_ENABLE_GPU)
 endif()
 
 
-if(WIN32)
+if(WIN32 AND tensorflow_BUILD_SHARED_LIB)
   # Windows: build a static library with the same objects as tensorflow.dll.
   # This can be used to build for a standalone exe and also helps us to
   # find all symbols that need to be exported from the dll which is needed
@@ -100,7 +99,7 @@ endif(WIN32)
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} ${TF_SDK_TYPE} # (SHARED | STATIC)
     # $<TARGET_OBJECTS:tf_c>
     # $<TARGET_OBJECTS:tf_cc>
     # $<TARGET_OBJECTS:tf_cc_framework>
@@ -134,20 +133,21 @@ if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
     target_link_libraries(tensorflow PUBLIC gcc_s gcc)
 endif()
 
-if(WIN32)
+if(WIN32 AND tensorflow_BUILD_SHARED_LIB)
   target_link_libraries(tensorflow PUBLIC tensorflow_static)
 endif(WIN32)
 
-target_include_directories(tensorflow PUBLIC 
-    $<INSTALL_INTERFACE:include/>
+if(NOT tensorflow_ENABLE_FIND_PACKAGE)
+  target_include_directories(tensorflow PUBLIC 
+    $<INSTALL_INTERFACE:include/> # redundant
     $<INSTALL_INTERFACE:include/external/nsync/public>)
+endif()
 
-  # INSTALL
-
-#######################
-
+##############################################################################
+# Installation
+#
 # https://github.com/forexample/package-example/blob/master/Foo/CMakeLists.txt
-
+##############################################################################
 
 # Generate:
 #   * ${CMAKE_CURRENT_BINARY_DIR}/generated_headers/${PROJECT_NAME}/${PROJECT_NAME}_EXPORT.h
@@ -248,8 +248,8 @@ install(EXPORT tensorflow_export
 set(tf_modules cc core)
 foreach(module ${tf_modules})
   install(DIRECTORY ${tensorflow_source_dir}/tensorflow/${module}/
-         DESTINATION include/tensorflow/${module}
-         FILES_MATCHING PATTERN "*.h")
+          DESTINATION include/tensorflow/${module}
+          FILES_MATCHING PATTERN "*.h")
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/${module}/
           DESTINATION include/tensorflow/${module}
           FILES_MATCHING PATTERN "*.h")
