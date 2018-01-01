@@ -565,8 +565,8 @@ if (tensorflow_ENABLE_GPU)
 
   # extract version strings from tf_cuda_nvcc_arch_flags
   # i.e., map default ${tf_cuda_nvcc_arch_flags} above to
-  # * comma separated list "3.0,3.5,5.2"
-  # * CudaVersion("3.0")
+  # * comma separated list "3.0,3.5,5.2" for add_definitions(-DTF_EXTRA_CUDA_CAPABILITIES...)
+  # * CudaVersion("3.0")  for configure_file() w/ cuda_config.h
   # Note, below we use "|" since "[,$]" doesn't work in the regex https://cmake.org/Bug/view.php?id=5380&history=1 
   STRING(REGEX MATCHALL "\([0-9]+\)" tf_cuda_arch_list "${tf_cuda_nvcc_arch_flags}")
   list(REMOVE_DUPLICATES tf_cuda_arch_list)
@@ -687,12 +687,12 @@ if (tensorflow_ENABLE_GPU)
   # in the default build is upgraded.
   if(WIN32)
     set(tensorflow_BUILD_INFO_FLAGS --build_config cuda --key_value
-      msvcp_dll_name=msvcp140.dll
-      cudart_dll_name=cudart64_${short_CUDA_VER}.dll
-      cuda_version_number=${tensorflow_CUDA_VERSION}
-      nvcuda_dll_name=nvcuda.dll
-      cudnn_dll_name=cudnn64_${tensorflow_CUDNN_VERSION}.dll
-      cudnn_version_number=${tensorflow_CUDNN_VERSION})
+        msvcp_dll_name=msvcp140.dll
+        cudart_dll_name=cudart64_${short_CUDA_VER}.dll
+        cuda_version_number=${tensorflow_CUDA_VERSION}
+        nvcuda_dll_name=nvcuda.dll
+        cudnn_dll_name=cudnn64_${tensorflow_CUDNN_VERSION}.dll
+        cudnn_version_number=${tensorflow_CUDNN_VERSION})
   else(WIN32)
     set(tensorflow_BUILD_INFO_FLAGS --build_config cuda --key_value
 	    cuda_version_number=${tensorflow_CUDA_VERSION}
