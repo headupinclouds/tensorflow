@@ -567,11 +567,17 @@ if (tensorflow_ENABLE_GPU)
   # i.e., map default ${tf_cuda_nvcc_arch_flags} above to
   # * comma separated list "3.0,3.5,5.2"
   # * CudaVersion("3.0")
+  # Note, below we use "|" since "[,$]" doesn't work in the regex https://cmake.org/Bug/view.php?id=5380&history=1 
   STRING(REGEX MATCHALL "\([0-9]+\)" tf_cuda_arch_list "${tf_cuda_nvcc_arch_flags}")
   list(REMOVE_DUPLICATES tf_cuda_arch_list)
   string(REPLACE ";" "," tf_cuda_arch_list "${tf_cuda_arch_list}")
-  string(REGEX REPLACE  "([0-9])+([0-9])([,^])" "\\1\.\\2\\3" tf_cuda_arch_list_commas "${tf_cuda_arch_list}")
-  string(REGEX REPLACE  "([0-9])+([0-9])([,^])" "CudaVersion(\"\\1\.\\2\")\\3" tf_cuda_arch_list_format "${tf_cuda_arch_list}")
+  string(REGEX REPLACE  "([0-9])+([0-9])([,|])" "\\1\.\\2\\3" tf_cuda_arch_list_commas "${tf_cuda_arch_list}|")
+  string(REPLACE "|" "" tf_cuda_arch_list_commas ${tf_cuda_arch_list_commas})
+  string(REGEX REPLACE  "([0-9])+([0-9])([,|])" "CudaVersion(\"\\1\.\\2\")\\3" tf_cuda_arch_list_format "${tf_cuda_arch_list}|")
+  string(REPLACE "|" "" tf_cuda_arch_list_format ${tf_cuda_arch_list_format})
+
+  message("tf_cuda_arch_list_commas ${tf_cuda_arch_list_commas}")
+  message("tf_cuda_arch_list_format ${tf_cuda_arch_list_format}")
   
   # add definition for tensorflow/tensorflow//core/common_runtime/gpu/gpu_device.cc
   add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES="${tf_cuda_arch_list_commas}")
