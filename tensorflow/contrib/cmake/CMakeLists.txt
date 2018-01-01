@@ -67,8 +67,9 @@ set(tensorflow_CUDNN_VERSION 7 CACHE STRING "cuDNN version to build against")
 # * Auto : for the detected CUDA architecture only
 # * Commaon : all common CUDA architectures
 # * Default : default tensorflow CUDA architectures
-set(tensorflow_CUDA_VALID_TYPES Auto Common All Default)
-set(tensorflow_CUDA_TYPE Default CACHE STRING "Cuda type (Auto|Common|All|Default)")
+# * Min : minimum CUDA architecture
+set(tensorflow_CUDA_VALID_TYPES Auto Common All Default Min)
+set(tensorflow_CUDA_TYPE Default CACHE STRING "Cuda type (Auto|Common|All|Default|Min)")
 set_property(CACHE tensorflow_CUDA_TYPE PROPERTY STRINGS ${tensorflow_CUDA_VALID_TYPES})
 if(NOT tensorflow_CUDA_TYPE IN_LIST tensorflow_CUDA_VALID_TYPES)
     message(FATAL_ERROR "tensorflow_CUDA_TYPE must be one of ${tensorflow_CUDA_VALID_TYPES}")
@@ -285,9 +286,6 @@ find_package(Protobuf CONFIG REQUIRED) # TODO
 set(PROTOBUF_PROTOC_EXECUTABLE protobuf::protoc)
 get_target_property(PROTOBUF_INCLUDE_DIRS protobuf::libprotobuf INTERFACE_INCLUDE_DIRECTORIES)
 
-message("DJH PROTOBUF_PROTOC_EXECUTABLE = ${PROTOBUF_PROTOC_EXECUTABLE}") 
-message("DJH PROTOBUF_INCLUDE_DIRS = ${PROTOBUF_INCLUDE_DIRS}")
-
 #########################
 
 # include(re2)
@@ -382,19 +380,9 @@ endfunction(list_sources)
 
 function(target_any_link_libraries target scope libraries)
   get_target_property(target_type ${target} TYPE)
-  message("TARGET = ${target} TYPE = ${target_type}")
-  
   string( COMPARE EQUAL "${target_type}" "OBJECT_LIBRARY" is_object_library)
   if(${is_object_library})
     foreach(dep ${libraries})
-      #message("dep: ${dep}")
-
-      if(TARGET ${target})
-        message("DJH ${target} is a target")
-      else()
-        message("DJH ${target} is not a target")
-      endif()
-      
       target_include_directories(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_INCLUDE_DIRECTORIES>)
       target_compile_definitions(${target} ${scope} $<TARGET_PROPERTY:${dep},INTERFACE_COMPILE_DEFINITIONS>)
       target_include_directories(${target} ${scope} ${EIGEN_ROOT}/include/eigen3) # for unsupported
@@ -406,7 +394,6 @@ function(target_any_link_libraries target scope libraries)
     endforeach() 
   endif()
   set_property(TARGET ${target} PROPERTY FOLDER "lib")
-  
 endfunction(target_any_link_libraries)
 
 include_directories(
@@ -559,6 +546,9 @@ if (tensorflow_ENABLE_GPU)
       "-gencode arch=compute_30,code=\"sm_30,compute_30\""
       "-gencode arch=compute_35,code=\"sm_35,compute_35\""
       "-gencode arch=compute_52,code=\"sm_52,compute_52\"")
+  elseif("${tensorflow_CUDA_TYPE}" STREQUAL "Min")
+    set(tf_cuda_nvcc_arch_flags
+      "-gencode arch=compute_30,code=\"sm_30,compute_30\"")
   else()
     CUDA_SELECT_NVCC_ARCH_FLAGS(tf_cuda_nvcc_arch_flags ${tensorflow_CUDA_TYPE})
   endif()
@@ -760,5 +750,3 @@ include(tf_shared_lib.cmake)
 if(tensorflow_BUILD_CC_TESTS OR tensorflow_BUILD_PYTHON_TESTS)
   include(tf_tests.cmake)
 endif()
-
-message("DJH: totally done")

@@ -13,7 +13,7 @@ tf_opts=(
     tensorflow_ENABLE_GPU=ON
     tensorflow_BUILD_CC_TESTS=ON
     tensorflow_ENABLE_GRPC_SUPPORT=ON
-    tensorflow_CUDA_TYPE=Auto # Default,All,Common
+    tensorflow_CUDA_TYPE=Min # Default,All,Common
 )
 
 polly.py --toolchain ${TOOLCHAIN} --config ${CONFIG} --fwd ${tf_opts[@]} --verbose ${*} --jobs 8

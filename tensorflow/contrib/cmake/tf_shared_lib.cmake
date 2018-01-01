@@ -95,7 +95,7 @@ if(WIN32 AND tensorflow_BUILD_SHARED_LIB)
           --output "${tensorflow_deffile}"
           --target tensorflow.dll
   )
-endif(WIN32)
+endif()
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
@@ -135,7 +135,7 @@ endif()
 
 if(WIN32 AND tensorflow_BUILD_SHARED_LIB)
   target_link_libraries(tensorflow PUBLIC tensorflow_static)
-endif(WIN32)
+endif()
 
 if(NOT tensorflow_ENABLE_FIND_PACKAGE)
   target_include_directories(tensorflow PUBLIC 

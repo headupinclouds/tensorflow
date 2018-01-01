@@ -342,7 +342,6 @@ if (tensorflow_BUILD_PYTHON_TESTS)
   )
 endif(tensorflow_BUILD_PYTHON_TESTS)
 
-message("DJH: tensorflow_BUILD_CC_TESTS = ${tensorflow_BUILD_CC_TESTS}")
 if (tensorflow_BUILD_CC_TESTS)
   #
   # cc unit tests. Be aware that by default we include 250+ tests which
@@ -350,8 +349,6 @@ if (tensorflow_BUILD_CC_TESTS)
   # If you want to cut this down, for example to a specific test, modify
   # tf_test_src_simple to your needs
   #
-
-  message("DJH: building tensorflow_BUILD_CC_TESTS")
   include_directories(${googletest_INCLUDE_DIRS})
 
   # cc tests wrapper

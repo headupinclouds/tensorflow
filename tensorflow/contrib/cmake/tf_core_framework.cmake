@@ -145,9 +145,6 @@ file(GLOB_RECURSE tf_protos_cc_srcs RELATIVE ${tensorflow_source_dir}
     "${tensorflow_source_dir}/tensorflow/core/*.proto"
     "${tensorflow_source_dir}/tensorflow/contrib/boosted_trees/proto/*.proto"
 )
-
-message("DJH: tensorflow_source_dir = ${tensorflow_source_dir}")
-message("DJH: tf_protos_cc_srcs = ${tf_protos_cc_srcs}")
   
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS
     ${tensorflow_source_dir} ${tf_protos_cc_srcs}
@@ -189,10 +186,6 @@ set(tf_proto_text_srcs
     "tensorflow/core/util/memmapped_file_system.proto"
     "tensorflow/core/util/saved_tensor_slice.proto"
 )
-
-
-message("DJH: tensorflow_source_dir = ${tensorflow_source_dir}")
-message("DJH: tf_proto_text_srcs = ${tf_proto_text_srcs}")
     
 RELATIVE_PROTOBUF_TEXT_GENERATE_CPP(PROTO_TEXT_SRCS PROTO_TEXT_HDRS
     ${tensorflow_source_dir} ${tf_proto_text_srcs}
