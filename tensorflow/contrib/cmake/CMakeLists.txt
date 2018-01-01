@@ -58,14 +58,24 @@ option(tensorflow_ENABLE_FIND_PACKAGE "Use find_package()" ON)
 
 # GPU, CUDA and cuDNN options
 option(tensorflow_ENABLE_GPU "Enable GPU support" OFF)
-set(tensorflow_CUDA_VERSION "9.0" CACHE STRING "CUDA version to build against")
-set(tensorflow_CUDNN_VERSION "7" CACHE STRING "cuDNN version to build against")
-
 set(tensorflow_CUDA_VERSION 9.0 CACHE STRING "CUDA version to build against")
 set(tensorflow_CUDNN_VERSION 7 CACHE STRING "cuDNN version to build against")
 
+# Compatibiltiy with CMake's CUDA_SELECT_NVCC_ARCH_FLAGS
+# https://gitlab.kitware.com/cmake/cmake/blob/2b0256c5ade94ca19467fd42075b3c22bd3856f2/Modules/FindCUDA/select_compute_arch.cmake
+# * All : all CUDA architectures
+# * Auto : for the detected CUDA architecture only
+# * Commaon : all common CUDA architectures
+# * Default : default tensorflow CUDA architectures
+set(tensorflow_CUDA_VALID_TYPES Auto Common All Default)
+set(tensorflow_CUDA_TYPE Default CACHE STRING "Cuda type (Auto|Common|All|Default)")
+set_property(CACHE tensorflow_CUDA_TYPE PROPERTY STRINGS ${tensorflow_CUDA_VALID_TYPES})
+if(NOT tensorflow_CUDA_TYPE IN_LIST tensorflow_CUDA_VALID_TYPES)
+    message(FATAL_ERROR "tensorflow_CUDA_TYPE must be one of ${tensorflow_CUDA_VALID_TYPES}")
+endif()
+
 message("tensorflow_CUDA_VERSION: ${tensorflow_CUDA_VERSION} ")
-message("tensorflow_CUDA_VERSION: ${tensorflow_CUDA_VERSION} ")
+message("tensorflow_CUDNN_VERSION: ${tensorflow_CUDNN_VERSION} ")
 
 if(HAIKU)
 	option(tensorflow_ENABLE_POSITION_INDEPENDENT_CODE "Enable PIE support" OFF)
@@ -75,7 +85,7 @@ endif()
 
 option(tensorflow_ENABLE_XSMM_SUPPORT "Enable XSMM support" OFF)
 
-if(tensorflow_BIULD_SHARED_LIB)
+if(tensorflow_BUILD_SHARED_LIB)
   set(TF_SDK_TYPE SHARED)
 else()
   set(TF_SDK_TYPE STATIC)
@@ -539,22 +549,42 @@ if (tensorflow_ENABLE_GPU)
 
   find_package(CUDA ${tensorflow_CUDA_VERSION} REQUIRED)
 
+  #CUDA_DETECT_INSTALLED_GPUS(tf_cuda_arch_list)
+
   # by default we assume compute cabability 3.5 and 5.2. If you change this change it in
   # CUDA_NVCC_FLAGS and cuda_config.h below
-  #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=\"sm_30,compute_30\";-gencode arch=compute_35,code=\"sm_35,compute_35\";-gencode arch=compute_52,code=\"sm_52,compute_52\")
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=\"sm_30,compute_30\")
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};--include-path ${PROJECT_BINARY_DIR}/$\{build_configuration\};--expt-relaxed-constexpr)
-  set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-ftz=true)  # Flush denormals to zero
+  message("tensorflow_CUDA_TYPE = ${tensorflow_CUDA_TYPE}")
+  if("${tensorflow_CUDA_TYPE}" STREQUAL "Default")
+    set(tf_cuda_nvcc_arch_flags
+      "-gencode arch=compute_30,code=\"sm_30,compute_30\""
+      "-gencode arch=compute_35,code=\"sm_35,compute_35\""
+      "-gencode arch=compute_52,code=\"sm_52,compute_52\"")
+  else()
+    CUDA_SELECT_NVCC_ARCH_FLAGS(tf_cuda_nvcc_arch_flags ${tensorflow_CUDA_TYPE})
+  endif()
+
+  list(APPEND CUDA_NVCC_FLAGS
+    ${tf_cuda_nvcc_arch_flags}
+    --include-path ${PROJECT_BINARY_DIR}/$\{build_configuration\}
+    --expt-relaxed-constexpr
+    -ftz=true  # Flush denormals to zero
+    )
+  
   set(CUDA_INCLUDE ${CUDA_TOOLKIT_TARGET_DIR} ${CUDA_TOOLKIT_TARGET_DIR}/extras/CUPTI/include)
   include_directories(${CUDA_INCLUDE})
-  if (WIN32)
-    #add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2)
-    add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=3.0)
-  else (WIN32)
-    # Without these double quotes, cmake in Linux makes it "-DTF_EXTRA_CUDA_CAPABILITIES=3.0, -D3.5, -D5.2" for cc, which incurs build breaks
-    #add_definitions(-DGOOGLE_CUDA=1 -D"TF_EXTRA_CUDA_CAPABILITIES=3.0,3.5,5.2")
-    add_definitions(-DGOOGLE_CUDA=1 -D"TF_EXTRA_CUDA_CAPABILITIES=3.0")
-  endif (WIN32)
+
+  # extract version strings from tf_cuda_nvcc_arch_flags
+  # i.e., map default ${tf_cuda_nvcc_arch_flags} above to
+  # * comma separated list "3.0,3.5,5.2"
+  # * CudaVersion("3.0")
+  STRING(REGEX MATCHALL "\([0-9]+\)" tf_cuda_arch_list "${tf_cuda_nvcc_arch_flags}")
+  list(REMOVE_DUPLICATES tf_cuda_arch_list)
+  string(REPLACE ";" "," tf_cuda_arch_list "${tf_cuda_arch_list}")
+  string(REGEX REPLACE  "([0-9])+([0-9])([,^])" "\\1\.\\2\\3" tf_cuda_arch_list_commas "${tf_cuda_arch_list}")
+  string(REGEX REPLACE  "([0-9])+([0-9])([,^])" "CudaVersion(\"\\1\.\\2\")\\3" tf_cuda_arch_list_format "${tf_cuda_arch_list}")
+  
+  # add definition for tensorflow/tensorflow//core/common_runtime/gpu/gpu_device.cc
+  add_definitions(-DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES="${tf_cuda_arch_list_commas}")
 
   if (WIN32)
     # add cudnn
@@ -620,11 +650,10 @@ if (tensorflow_ENABLE_GPU)
   #   @cuda_version@
   #   @cudnn_version@
   #   @cuda_toolkit_path@
-  set(cuda_compute_capabilities "CudaVersion(\"3.0\")")
+  set(cuda_compute_capabilities "${tf_cuda_arch_list_format}")
   set(cuda_version "64_${short_CUDA_VER}")
   set(cudnn_version "64_${tensorflow_CUDNN_VERSION}")
   set(cuda_toolkit_path "${CUDA_TOOLKIT_ROOT_DIR}")
-
   set(cuda_config_h "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h")
   set(cuda_config_h_in "${tensorflow_source_dir}/third_party/gpus/cuda/cuda_config.h.in")
   configure_file("${cuda_config_h_in}" "${cuda_config_h}" @ONLY)
@@ -680,7 +709,7 @@ endif(tensorflow_ENABLE_GPU)
 
 # Find python executable
 include(FindPythonInterp)
-if(NOT ${PYTepHONINTERP_FOUND})
+if(NOT ${PYTHONINTERP_FOUND})
     message(FATAL_ERROR "CMake was unable to find a python interpreter.")
 endif()
 
