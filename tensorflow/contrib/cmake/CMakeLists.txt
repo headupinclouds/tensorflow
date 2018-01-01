@@ -63,11 +63,11 @@ set(tensorflow_CUDNN_VERSION 7 CACHE STRING "cuDNN version to build against")
 
 # Compatibiltiy with CMake's CUDA_SELECT_NVCC_ARCH_FLAGS
 # https://gitlab.kitware.com/cmake/cmake/blob/2b0256c5ade94ca19467fd42075b3c22bd3856f2/Modules/FindCUDA/select_compute_arch.cmake
-# * All : all CUDA architectures
-# * Auto : for the detected CUDA architecture only
+# * All     : all CUDA architectures
+# * Auto    : for the detected CUDA architecture only
 # * Commaon : all common CUDA architectures
 # * Default : default tensorflow CUDA architectures
-# * Min : minimum CUDA architecture
+# * Min     : minimum CUDA architecture
 set(tensorflow_CUDA_VALID_TYPES Auto Common All Default Min)
 set(tensorflow_CUDA_TYPE Default CACHE STRING "Cuda type (Auto|Common|All|Default|Min)")
 set_property(CACHE tensorflow_CUDA_TYPE PROPERTY STRINGS ${tensorflow_CUDA_VALID_TYPES})
