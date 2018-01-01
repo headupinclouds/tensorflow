@@ -29,9 +29,18 @@ Podfile.lock
 /tensorflow/contrib/lite/examples/ios/simple/data/*.tflite
 xcuserdata/**
 
+# generated files
+tensorflow/contrib/cmake/tf_null.cc
+third_party/gpus/cuda/cuda_config.h
+third_party/gpus/cuda/include
+
 # Android
 .gradle
 .idea
 *.iml
 local.properties
 gradleBuild
+
+_builds
+_logs
+_install
