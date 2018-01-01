@@ -4,6 +4,17 @@ cmake_minimum_required(VERSION 3.10)
 # Project
 project(tensorflow VERSION 1.4 LANGUAGES C CXX)
 
+# Define the export name to be used throughout
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+function(tf_install_lib target)
+  install(
+    TARGETS ${target}
+    EXPORT ${TARGETS_EXPORT_NAME}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+endfunction()
+
 set(TF_LIB_TYPE STATIC) # future use
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -387,13 +398,6 @@ function(target_any_link_libraries target scope libraries)
   set_property(TARGET ${target} PROPERTY FOLDER "lib")
   
 endfunction(target_any_link_libraries)
-
-function(tf_install_lib target)
-  install(TARGETS ${target} EXPORT tensorflow_export
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-endfunction()
 
 include_directories(
     # Source and generated code.
