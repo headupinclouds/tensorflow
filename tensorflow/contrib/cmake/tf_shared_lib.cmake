@@ -126,8 +126,6 @@ target_link_libraries(tensorflow PUBLIC
     ${tf_libs} # from OBJECT libs
     )
 
-tf_install_lib(tensorflow)
-
 # There is a bug in GCC 5 resulting in undefined reference to a __cpu_model function when
 # linking to the tensorflow library. Adding the following libraries fixes it.
 # See issue on github: https://github.com/tensorflow/tensorflow/issues/9593
