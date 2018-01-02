@@ -99,7 +99,17 @@ endif()
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
-add_library(${PROJECT_NAME} ${TF_SDK_TYPE} # (SHARED | STATIC)
+
+set(tf_null_tmp ${CMAKE_CURRENT_BINARY_DIR}/tf_null.cc)
+set(tf_null ${CMAKE_CURRENT_LIST_DIR}/tf_null.cc)
+file(WRITE ${tf_null_tmp} "")
+add_custom_command(
+  OUTPUT "${tf_null}"
+  DEPENDS "${tf_null_tmp}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tf_null_tmp}" "${tf_null}"
+  ) 
+
+add_library(${PROJECT_NAME} ${TF_SDK_TYPE} ${tf_null} # (SHARED | STATIC)
     # $<TARGET_OBJECTS:tf_c>
     # $<TARGET_OBJECTS:tf_cc>
     # $<TARGET_OBJECTS:tf_cc_framework>
