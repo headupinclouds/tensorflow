@@ -124,7 +124,9 @@ target_link_libraries(tensorflow PUBLIC
     ${tensorflow_EXTERNAL_LIBRARIES}
     tf_protos_cc
     ${tf_libs} # from OBJECT libs
-)
+    )
+
+tf_install_lib(tensorflow)
 
 # There is a bug in GCC 5 resulting in undefined reference to a __cpu_model function when
 # linking to the tensorflow library. Adding the following libraries fixes it.
@@ -230,18 +232,6 @@ install(
     DESTINATION "${config_install_dir}"
 )
 # }
-
-#######################
-
-install(TARGETS tensorflow
-        EXPORT tensorflow_export
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
-        
-install(EXPORT tensorflow_export
-        FILE TensorflowConfig.cmake
-        DESTINATION lib/cmake)
 
 # install necessary headers
 # tensorflow headers
