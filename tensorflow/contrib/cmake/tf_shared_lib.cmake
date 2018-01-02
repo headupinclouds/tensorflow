@@ -246,39 +246,47 @@ install(
 set(tf_modules cc core)
 foreach(module ${tf_modules})
   install(DIRECTORY ${tensorflow_source_dir}/tensorflow/${module}/
-          DESTINATION include/tensorflow/${module}
-          FILES_MATCHING PATTERN "*.h")
+    DESTINATION include/tensorflow/${module}
+    FILES_MATCHING PATTERN "*.h")
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tensorflow/${module}/
-          DESTINATION include/tensorflow/${module}
-          FILES_MATCHING PATTERN "*.h")
+    DESTINATION include/tensorflow/${module}
+    FILES_MATCHING PATTERN "*.h")
 endforeach()
 install(DIRECTORY ${tensorflow_source_dir}/tensorflow/stream_executor/
-        DESTINATION include/tensorflow/stream_executor
-        FILES_MATCHING PATTERN "*.h")
+  DESTINATION include/tensorflow/stream_executor
+  FILES_MATCHING PATTERN "*.h")
 
-
-if(tensorflow_ENABLE_FIND_PACKAGE)
-  # We are using find_package()
-  return()
-endif()
-      
 # google protobuf headers
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/protobuf/src/protobuf/src/google/
-        DESTINATION include/google
-        FILES_MATCHING PATTERN "*.h")
+set(tf_protobuf_hdrs ${CMAKE_CURRENT_BINARY_DIR}/protobuf/src/protobuf/src/google/)
+if(EXISTS ${tf_protobuf_hdrs})
+  install(DIRECTORY ${tf_protobuf_hdrs}
+    DESTINATION include/google
+    FILES_MATCHING PATTERN "*.h")
+endif()
 # nsync headers
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/nsync/
-        DESTINATION include/external/nsync
-        FILES_MATCHING PATTERN "*.h")
+set(tf_nsync_hdrs ${CMAKE_CURRENT_BINARY_DIR}/external/nsync/)
+if(EXISTS ${tf_nsync_hdrs})
+  install(DIRECTORY ${tf_nsynch_hdrs}
+    DESTINATION include/external/nsync
+    FILES_MATCHING PATTERN "*.h")
+endif()
 # Eigen directory
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/eigen/src/eigen/Eigen/
-        DESTINATION include/Eigen)
+set(tf_eigen_bin_hdrs ${CMAKE_CURRENT_BINARY_DIR}/eigen/src/eigen/Eigen/)
+if(EXISTS ${tf_eigen_bin_hdrs})
+  install(DIRECTORY ${tf_eigen_bin_hdrs} DESTINATION include/Eigen)
+endif()
 # external directory
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external/eigen_archive/
-        DESTINATION include/external/eigen_archive)
+set(tf_eigen_bin_arch_hdrs ${CMAKE_CURRENT_BINARY_DIR}/external/eigen_archive/)
+if(EXISTS ${tf_eigen_bin_arch_hdrs})
+  install(DIRECTORY ${tf_eigen_bin_arch_hdrs} DESTINATION include/external/eigen_archive)
+endif()
 # third_party eigen directory
-install(DIRECTORY ${tensorflow_source_dir}/third_party/eigen3/
-        DESTINATION include/third_party/eigen3)
+set(tf_eigen_third_party_hdrs ${tensorflow_source_dir}/third_party/eigen3/)
+if(EXISTS ${tf_eigen_third_party_hdrs})
+  install(DIRECTORY ${tf_eigen_third_party_hdrs} DESTINATION include/third_party/eigen3)
+endif()
 # unsupported Eigen directory
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/eigen/src/eigen/unsupported/Eigen/
-        DESTINATION include/unsupported/Eigen)
+set(tf_eigen_bin_unsupported_hdrs ${CMAKE_CURRENT_BINARY_DIR}/eigen/src/eigen/unsupported/Eigen/)
+if(EXISTS ${tf_eigen_bin_unsupported_hdrs})
+  install(DIRECTORY DESTINATION include/unsupported/Eigen)
+endif()
