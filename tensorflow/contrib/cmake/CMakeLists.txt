@@ -558,6 +558,7 @@ if (tensorflow_ENABLE_GPU)
     --include-path ${PROJECT_BINARY_DIR}/$\{build_configuration\}
     --expt-relaxed-constexpr
     -ftz=true  # Flush denormals to zero
+    -O0 # fast compilation (to improve build times while debugging)
     )
   
   set(CUDA_INCLUDE ${CUDA_TOOLKIT_TARGET_DIR} ${CUDA_TOOLKIT_TARGET_DIR}/extras/CUPTI/include)
