@@ -378,6 +378,19 @@ function(list_sources srcs)
   endforeach()
 endfunction(list_sources)
 
+# https://github.com/caffe2/caffe2/blob/f2cf8933fc8c04f149ea27f30381517df358c1b5/cmake/Utils.cmake#L173-L185
+function(tf_add_whole_archive_flag lib output_var)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> PARENT_SCOPE)
+  elseif(MSVC)
+    # In MSVC, we will add whole archive in default.
+    set(${output_var} -WHOLEARCHIVE:$<TARGET_FILE:${lib}> PARENT_SCOPE)
+  else()
+    # Assume everything else is like gcc
+    set(${output_var} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive PARENT_SCOPE)
+  endif()
+endfunction()
+
 function(target_any_link_libraries target scope libraries)
   get_target_property(target_type ${target} TYPE)
   string( COMPARE EQUAL "${target_type}" "OBJECT_LIBRARY" is_object_library)

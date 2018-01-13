@@ -56,9 +56,6 @@ if(WIN32 AND tensorflow_BUILD_SHARED_LIB)
   # we need.
   #
 
-  # TODO: create empty *.cc files for the lib
-  # and use copy_if_different to avoid rebuilds
-  
   add_library(tensorflow_static STATIC
       # $<TARGET_OBJECTS:tf_c>
       # $<TARGET_OBJECTS:tf_cc>
@@ -99,17 +96,8 @@ endif()
 
 # tensorflow is a shared library containing all of the
 # TensorFlow runtime and the standard ops and kernels.
-
-set(tf_null_tmp ${CMAKE_CURRENT_BINARY_DIR}/tf_null.cc)
-set(tf_null ${CMAKE_CURRENT_LIST_DIR}/tf_null.cc)
-file(WRITE ${tf_null_tmp} "")
-add_custom_command(
-  OUTPUT "${tf_null}"
-  DEPENDS "${tf_null_tmp}"
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tf_null_tmp}" "${tf_null}"
-  ) 
-
-add_library(${PROJECT_NAME} ${TF_SDK_TYPE} ${tf_null} # (SHARED | STATIC)
+add_library(${PROJECT_NAME} ${TF_SDK_TYPE} # (SHARED | STATIC)
+    tf_shared_lib_null.cc
     # $<TARGET_OBJECTS:tf_c>
     # $<TARGET_OBJECTS:tf_cc>
     # $<TARGET_OBJECTS:tf_cc_framework>

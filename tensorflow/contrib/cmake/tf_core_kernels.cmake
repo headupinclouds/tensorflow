@@ -243,16 +243,7 @@ if (tensorflow_ENABLE_GPU)
   set(tf_core_gpu_kernels_lib tf_core_gpu_kernels)
 
   # we need at least one cpp file for cuda_add_library() to produce a lib
-  set(tf_null_tmp ${CMAKE_CURRENT_BINARY_DIR}/tf_null.cc)
-  set(tf_null ${CMAKE_CURRENT_LIST_DIR}/tf_null.cc)
-  file(WRITE ${tf_null_tmp} "")
-  add_custom_command(
-    OUTPUT "${tf_null}"
-    DEPENDS "${tf_null_tmp}"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tf_null_tmp}" "${tf_null}"
-    )
-
-  cuda_add_library(${tf_core_gpu_kernels_lib} STATIC ${tf_core_gpu_kernels_srcs_cu} ${tf_null})
+  cuda_add_library(${tf_core_gpu_kernels_lib} STATIC ${tf_core_gpu_kernels_srcs_cu} tf_core_kernels_null.cc)
   tf_install_lib(${tf_core_gpu_kernels_lib})
   set_target_properties(${tf_core_gpu_kernels_lib}
                         PROPERTIES DEBUG_POSTFIX ""
