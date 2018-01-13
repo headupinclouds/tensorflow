@@ -13,6 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
+
+# https://github.com/tensorflow/tensorflow/issues/4242#issuecomment-245436151
+# TensorFlow uses a static registration mechanism (in particular behind the
+# REGISTER_OP() and
+# REGISTER_KERNEL_BUILDER() macros)
+# in the implementation of the kernel library
+
 set(tf_libs
   tf_c
   tf_cc
@@ -27,6 +34,13 @@ set(tf_libs
   tf_tools_transform_graph_lib
   tf_core_kernels
   )
+
+# TODO: Apply more selectively (if possible)
+set(tf_libs "")
+foreach(lib ${tf_names})
+  tf_add_whole_archive_flag(${lib} ${lib}_link_command)
+  list(APPEND tf_libs ${${lib}_link_command})
+endforeach()
 
 if(TARGET tf_core_distributed_runtime)
   list(APPEND tf_libs tf_core_distributed_runtime)
@@ -115,6 +129,9 @@ add_library(${PROJECT_NAME} ${TF_SDK_TYPE} # (SHARED | STATIC)
     # $<$<BOOL:${tensorflow_ENABLE_GPU}>:$<TARGET_OBJECTS:tf_stream_executor>>
     ${tensorflow_deffile}
 )
+
+# For static libs we need to apply
+# tf_add_whole_archive_flag
 
 target_link_libraries(tensorflow PUBLIC
     ${tf_core_gpu_kernels_lib}
