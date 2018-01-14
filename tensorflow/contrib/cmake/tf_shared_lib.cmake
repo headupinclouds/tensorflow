@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+set(namespace "${PROJECT_NAME}::")
+
 
 # https://github.com/tensorflow/tensorflow/issues/4242#issuecomment-245436151
 # TensorFlow uses a static registration mechanism (in particular behind the
@@ -35,11 +37,28 @@ set(tf_names
   tf_core_kernels
   )
 
+
+# Use alias libraries to make sure that the TARGET_FILE targets use the tensorflow:: prefix
+#
+# Wrong:
+#set_target_properties(tensorflow::tensorflow PROPERTIES INTERFACE_LINK_LIBRARIES "tensorflow::tf_protos_cc;-Wl,-force_load,\$<TARGET_FILE:tf_c>;...")
+#
+# Correct:
+#set_target_properties(tensorflow::tensorflow PROPERTIES INTERFACE_LINK_LIBRARIES "tensorflow::tf_protos_cc;-Wl,-force_load,\$<TARGET_FILE:tensorflow::tf_c>;...")
+
 # TODO: Apply more selectively (if possible)
 set(tf_libs "")
 foreach(lib ${tf_names})
-  tf_add_whole_archive_flag(${lib} ${lib}_link_command)
-  list(APPEND tf_libs ${${lib}_link_command})
+  
+  # Here try to create alias targets so that the syntax for the pkgconfig file we loo
+  set(alias_lib_name "${namespace}${lib}")
+  add_library(${alias_lib_name} ALIAS ${lib})
+  set(alias_lib_link_command  ${lib}_link_command)
+  tf_add_whole_archive_flag(${alias_lib_name} ${alias_lib_link_command})
+  list(APPEND tf_libs ${alias_lib_link_command})
+  
+#  tf_add_whole_archive_flag(${lib} ${lib}_link_command)
+#  list(APPEND tf_libs ${${lib}_link_command})
 endforeach()
 
 if(TARGET tf_core_distributed_runtime)
@@ -186,7 +205,6 @@ set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Configuration
 set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
 set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
-set(namespace "${PROJECT_NAME}::")
 
 # Include module with fuction 'write_basic_package_version_file'
 include(CMakePackageConfigHelpers)
