@@ -53,8 +53,7 @@ foreach(lib ${tf_names})
   # Here try to create alias targets so that the syntax for the pkgconfig file we loo
   set(alias_lib_name "${namespace}${lib}")
   add_library(${alias_lib_name} ALIAS ${lib})
-  set(alias_lib_link_command  ${lib}_link_command)
-  tf_add_whole_archive_flag(${alias_lib_name} ${alias_lib_link_command})
+  tf_add_whole_archive_flag(${alias_lib_name} alias_lib_link_command)
   list(APPEND tf_libs ${alias_lib_link_command})
   
 #  tf_add_whole_archive_flag(${lib} ${lib}_link_command)
