@@ -20,7 +20,7 @@
 # REGISTER_KERNEL_BUILDER() macros)
 # in the implementation of the kernel library
 
-set(tf_libs
+set(tf_names
   tf_c
   tf_cc
   tf_cc_framework
