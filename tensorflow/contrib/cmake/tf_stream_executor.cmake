@@ -66,6 +66,13 @@ if (tensorflow_ENABLE_GPU)
         "${tensorflow_source_dir}/tensorflow/stream_executor/cuda/*.cc"
     )
     list(APPEND tf_stream_executor_srcs ${tf_stream_executor_gpu_srcs})
+else()
+  # exclude dso_loader, which is specifically for cuda related libraries
+  set(tf_stream_executor_exclude_srcs 
+    "${tensorflow_source_dir}/tensorflow/stream_executor/dso_loader.cc"
+    "${tensorflow_source_dir}/tensorflow/stream_executor/dso_loader.h"
+    )
+  list(REMOVE_ITEM tf_stream_executor_srcs ${tf_stream_executor_exclude_srcs})
 endif()
 
 #file(GLOB_RECURSE tf_stream_executor_test_srcs
