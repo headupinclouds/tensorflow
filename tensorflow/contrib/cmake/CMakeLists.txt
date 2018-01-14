@@ -728,7 +728,9 @@ include(resolve_duplicate_filenames.cmake)
 
 # Let's get to work!
 include(tf_core_framework.cmake)
-add_dependencies(tf_protos_cc tf_cuda_headers)
+if(TARGET tf_cuda_headers)
+  add_dependencies(tf_protos_cc tf_cuda_headers)
+endif()
 
 include(tf_stream_executor.cmake)
 include(tf_core_cpu.cmake)
